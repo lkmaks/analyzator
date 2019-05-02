@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+
+<script>
+    $(function() {
+        $('#new_room').click(function () {
+            $.post("{{ url_for('create_room') }}",
+                function (res) {
+                    /*
+                    var link = "{{ url_for('room')}}";
+                    link += '?id=' + res;
+                    $('#rooms').append(`<a href="${link}">Room #${res}</a>`);
+                    */
+                    window.location.replace("{{ url_for('room') }}" + '?id=' + res);
+                });
+
+            $('#room_name').val('');
+        });
+    });
+</script>
+
+{% if not current_user.username %}
+    <p class="alert alert-info">In order to join or create a table you should register and login</p>
+{% endif %}
+
+{% if current_user.username %}
+<div id="content">
+    <div id="left_panel_index">
+        {% if current_user.username %}
+        <button id="new_room" class="create_room_btn btn-default">Create new room</button>
+        {% endif %}
+    </div>
+
+    <div id="rooms">
+    {% for room in rooms %}
+        <div class="table panel panel-default">
+            <h3>Room <span color="red">#{{room.id}}</span></h3>
+            <a href="{{ url_for('room') + '?id=' ~ room.id}}" class="btn btn-default" style="font-size: 15px">Join</a>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

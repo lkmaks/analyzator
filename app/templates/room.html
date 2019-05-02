@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+
+<script>
+
+    function div(a, b) {
+        return Math.floor(a / b);
+    }
+
+    var CNT = 0;
+    var STACK_POS;
+    var ARR_POS; //  0: empty, 1: black; 2: white
+
+    var socket;
+    var ROOM_ID;
+
+    var LEFT_X = 0, TOP_Y = 0;
+    var STEP = 50;
+    var SIZE = 15;
+    var BOARD_COLOR = '#eaff82';
+    var LINE_COLOR = 'black';
+    var BOARD_LINE_WIDTH = 1.5;
+    var WHITE_STONE_COLOR = '#ededed';
+
+    var STONE_RADIUS = div(STEP, 2) - 1;
+
+    function min (a, b) {
+        if (a < b) {
+            return a;
+        }
+        else {
+            return b;
+        }
+    }
+
+    function init_alg() {
+        STACK_POS = [];
+        ARR_POS = [];
+        for (var i = 0; i < SIZE; ++i) {
+            ARR_POS[i] = [];
+            for (var j = 0; j < SIZE; ++j) {
+                ARR_POS[i][j] = 0;
+            }
+        }
+    }
+
+    function add_username(name) {
+        if (!$('*').is(`#label_${name}`)) {
+            $('#right_panel_bottom').append(`<p class="username_in_room" id="label_${name}">${name}</p>`);
+        }
+    }
+
+    function remove_username(name) {
+        $(`#label_${name}`).remove();
+    }
+
+    function post_chat_message(mes) {
+        $('#chat').append(`<p class="chat_message">${mes}</p>`);
+        $('#chat').scrollTop(1000000000);
+    }
+
+    function wrap_username(s) {
+        return `<b>${s}</b>`;
+    }
+
+    function init_sockets() {
+        var arr = window.location.href.split('=');
+        ROOM_ID = arr[arr.length - 1];
+
+        socket = io.connect();
+
+
+        socket.on('pos_data', function (mes) {
+            var arr = mes.split(';');
+            for (var i = 0; i < arr.length - 1; i += 2) {
+                add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
+            }
+        });
+
+        socket.on('board_event', function (mes) {
+            if (mes === 'undo') {
+                undo();
+            }
+            else {
+                var arr = mes.split(';');
+                if (arr.length === 3) {
+                    i = parseInt(arr[1]), j = parseInt(arr[2]);
+                    if (arr[0] == "add_stone") {
+                        add_stone(i, j);
+                    }
+                    else if (arr[0] == 'undo_until') {
+                        undo_until(i, j);
+                    }
+                }
+            }
+        });
+
+        socket.on('room_event', function (mes) {
+            if (mes.slice(0, 4) == 'new:') {
+                add_username(mes.slice(4));
+                post_chat_message(wrap_username(mes.slice(4)) + ' joined');
+            }
+            else if (mes.slice(0, 6) == 'leave:') {
+                remove_username(mes.slice(6));
+                post_chat_message(wrap_username(mes.slice(6)) + ' leaved');
+            }
+        });
+
+        socket.on('chat_event', function (mes) {
+            post_chat_message(mes);
+        });
+
+        socket.emit('room_event', create_mes('join'));
+    }
+
+    function board_context() {
+        var can = document.getElementById('board');
+        return can.getContext("2d");
+    }
+
+
+    function clear_rect(i, j) {
+        var ctx = board_context();
+        ctx.fillStyle = BOARD_COLOR;
+        ctx.fillRect(STEP * j + div(STEP, 2), STEP * i + div(STEP, 2), STEP, STEP);
+
+        ctx.fillStyle = LINE_COLOR;
+        ctx.lineWidth = BOARD_LINE_WIDTH;
+        var x0 = STEP * j + STEP, y0 = STEP * i + STEP;
+        if (i > 0) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0, y0 - div(STEP, 2) - 1);
+            ctx.stroke();
+        }
+        if (i < SIZE - 1) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0, y0 + div(STEP, 2));
+            ctx.stroke();
+        }
+        if (j > 0) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0 - div(STEP, 2) - 1, y0);
+            ctx.stroke();
+        }
+        if (j < SIZE - 1) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0 + div(STEP, 2), y0);
+            ctx.stroke();
+        }
+    }
+
+
+    function removeNumbers() {
+        for (var i = 0; i < STACK_POS.length; ++i) {
+            x = STACK_POS[i][0], y = STACK_POS[i][1];
+            color = 'black';
+            if (i % 2 == 1) {
+                color = WHITE_STONE_COLOR;
+            }
+            place_stone(x, y, color, '', WHITE_STONE_COLOR);
+        }
+    }
+
+
+    function place_stone(i, j, color, text, text_color) {
+        ctx = board_context();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        var x = (j + 1) * STEP, y = (i + 1) * STEP;
+        ctx.arc(x, y, STONE_RADIUS, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        ctx.fillStyle = text_color;
+        ctx.font = "30px Verdana";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, x, y, STEP);
+    }
+
+
+    function rescale_board(h) {
+        STEP = div(h, 16) - 1;
+        STONE_RADIUS = div(STEP, 2) - 1;
+    }
+
+
+    function create_board () {
+        var tag = $('#board_container').get(0);
+        rescale_board(min(tag.offsetHeight, tag.offsetWidth));
+
+        var can = document.createElement('canvas');
+        can.id = 'board';
+        can.width = STEP * 16;
+        can.height = STEP * 16;
+
+        tag.appendChild(can);
+
+
+        var ctx = can.getContext("2d");
+        ctx.translate(0.5, 0.5);
+
+        ctx.fillStyle = BOARD_COLOR;
+        ctx.lineWidth = BOARD_LINE_WIDTH;
+        ctx.fillRect(LEFT_X, TOP_Y, STEP * (SIZE + 1), STEP * (SIZE + 1));
+
+        ctx.fillStyle = LINE_COLOR;
+        for (var i = 0; i < SIZE; ++i) {
+            ctx.beginPath();
+            ctx.moveTo(LEFT_X + STEP, TOP_Y + (i + 1) * STEP);
+            ctx.lineTo(LEFT_X + STEP * SIZE, TOP_Y + (i + 1) * STEP);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(LEFT_X + (i + 1) * STEP, TOP_Y + STEP);
+            ctx.lineTo(LEFT_X + (i + 1) * STEP, TOP_Y + STEP * SIZE);
+            ctx.stroke();
+        }
+
+    }
+
+
+    function undo() {
+        if (CNT > 0) {
+            var x = STACK_POS[CNT - 1][0];
+            var y = STACK_POS[CNT - 1][1];
+            CNT -= 1;
+            ARR_POS[x][y] = 0;
+            STACK_POS.pop();
+            clear_rect(x, y);
+        }
+    }
+
+    function add_stone(i, j) {
+        if (CNT % 2 == 0) {
+            place_stone(i, j, 'black', CNT + 1, WHITE_STONE_COLOR);
+        }
+        else {
+            place_stone(i, j, WHITE_STONE_COLOR, CNT + 1, 'black');
+        }
+        CNT += 1;
+        ARR_POS[i][j] = CNT % 2 + 1;
+        STACK_POS.push([i, j]);
+    }
+
+    function undo_until(i, j) {
+        while (!(STACK_POS[CNT - 1][0] == i && STACK_POS[CNT - 1][1] == j)) {
+            var x = STACK_POS[CNT - 1][0];
+            var y = STACK_POS[CNT - 1][1];
+            CNT -= 1;
+            ARR_POS[x][y] = 0;
+            STACK_POS.pop();
+            clear_rect(x, y);
+        }
+    }
+
+
+    function create_mes(msg) {
+        var obj = new Object();
+        obj.room = ROOM_ID;
+        obj.mes = msg;
+        return obj;
+    }
+
+
+    function user_click_event(i, j, button) {
+        if (button === 2) {
+            socket.emit('board_event', create_mes('undo'));
+        }
+        else if (button === 0) {
+            if (ARR_POS[i][j] == 0) {
+                socket.emit('board_event', create_mes(`add_stone;${i};${j}`));
+            }
+            else {
+                socket.emit('board_event', create_mes(`undo_until;${i};${j}`));
+            }
+        }
+    }
+
+
+    $(function() {
+        // init of board, attaching click event
+        init_alg();
+        create_board();
+        init_sockets();
+
+
+        $('#board').click(function(e) {
+            var rect = this.getBoundingClientRect();
+            var x = e.pageX - rect.left,
+                y = e.pageY - rect.top;
+            if (x >= div(STEP, 2) && x < LEFT_X + STEP * SIZE + div(STEP, 2)
+                && y >= div(STEP, 2) && y < TOP_Y + STEP * SIZE + div(STEP, 2)) {
+                x -= LEFT_X;
+                x += div(STEP, 2);
+                x = div(x, STEP);
+                --x;
+                y -= TOP_Y;
+                y += div(STEP, 2);
+                y = div(y, STEP);
+                --y;
+
+                user_click_event(y, x, e.button);
+            }
+        });
+
+        $('#board').get(0).addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            user_click_event(0, 0, e.button);
+            return false;
+        });
+
+        $('#remove_numbers').click(function () {
+            removeNumbers();
+        })
+
+        $('#room_id').append(ROOM_ID);
+
+        $('#chat_text_field').on('enterKey', function (e) {
+            socket.emit('chat_event', $('#chat_text_field').val());
+            $('#chat_text_field').val('');
+        });
+
+        $('#chat_text_field').keypress(function (e) {
+            if (e.keyCode == 13) {
+                $(this).trigger('enterKey');
+            }
+        });
+
+        window.onbeforeunload = function () {
+            socket.emit('disconnect_event');
+        }
+    });
+
+</script>
+
+<div id="gamecontent">
+    <div id="board_container"></div>
+    <div id="right_panel_room">
+        <div id="right_panel_top">
+            <div id="chat_header">
+                <h2>Room #<span id="room_id"></span></h2>
+            </div>
+            <div id="chat_area">
+                <div id="chat"></div>
+                <input type="text" id="chat_text_field">
+            </div>
+        </div>
+        <div id="right_panel_bottom">
+            <p style="font-size: 30px; margin: 10px">Players in this room:</p>
+            {% for tu in temp_users %}
+                <p class="username_in_room" id="label_{{tu.user.username}}">{{ tu.user.username }}</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

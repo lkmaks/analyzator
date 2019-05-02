@@ -1,0 +1,157 @@
+.navbar-btn, .navbar-text{
+    font-size: 30px;
+}
+
+#content {
+    position: absolute;
+    top: 100px;
+    left: 0px;
+}
+
+.table {
+    padding: 10px;
+    margin: 10px;
+    width: 200px;
+    text-align: center;
+    display: inline-block
+}
+
+#rooms {
+    position: absolute;
+    left: 220px;
+    border: 4px double black;
+    width: 1600px;
+    margin-bottom: 30px;
+}
+
+#left_panel_index {
+    position: absolute;
+    left: 10px;
+    width: 200px;
+    height: 800px;
+    border: 4px double black;
+}
+
+.right-navbar {
+    margin-right: 30px;
+}
+
+#register_link {
+    margin-right: 10px;
+}
+
+
+body {
+    padding-top: 90px;
+}
+
+.create_room_btn {
+    margin: 10px;
+    font-size: 2em;
+    padding: 5px;
+}
+
+#gamecontent {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+#right_panel_room {
+    position: absolute;
+    width: 35%;
+    height: 100%;
+    right: 0px;
+    top: 0px;
+    border: 4px black double;
+}
+
+#right_panel_bottom {
+    position: absolute;
+    width: 100%;
+    height: 30%;
+    background-color: beige;
+    overflow: auto;
+    bottom: 0;
+}
+
+#right_panel_top {
+    position: absolute;
+    width: 100%;
+    height: 70%;
+    background-color: #c4eebe;
+}
+
+#board_container {
+    text-align: center;
+    vertical-align: middle;
+    width: 65%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+    border: 4px black double;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+.username_in_room {
+    display: block;
+    font-size: 30px;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin: 4px;
+    border: 1px solid black;
+    background-color: #ff5c4f;
+}
+
+#chat_header {
+    position: absolute;
+    top: 0;
+    height: 60px;
+    width: 100%;
+    text-align: center;
+    border-bottom: 2px solid black;
+    background-color: lightyellow;
+    vertical-align: middle;
+}
+
+.chat_message {
+    display: block;
+    margin: 5px;
+}
+
+#chat_area {
+    position: absolute;
+    top: 60px;
+    bottom: 0;
+    width: 100%;
+}
+
+#chat {
+    padding-bottom: 20px;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    bottom: 30px;
+    font-size: 20px;
+    overflow-y: auto;
+}
+
+#chat_text_field {
+    position: absolute;
+    height: 40px;
+    width: 100%;
+    bottom: 0;
+    font-size: 25px;
+}
+
+.register_form {
+    text-align: center;
+    width: 40%;
+    position: absolute;
+    left: 25%;
+}
