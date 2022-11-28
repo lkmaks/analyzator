@@ -1,3 +1,4 @@
 from app import app, socketio
-socketio.run(app, debug=False)
+
+socketio.run(app, host='0.0.0.0', debug=False)
 
