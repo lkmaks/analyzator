@@ -1,4 +1,6 @@
 from app import app, socketio
+import os
 
-socketio.run(app, host='0.0.0.0', debug=False)
+port = os.environ['PORT']
+socketio.run(app, host='0.0.0.0', port=port, debug=False)
 
