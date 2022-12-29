@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_user, logout_user
 from app.models import User, Room, TemporaryUser
-from app.forms import LoginForm, RegistrationForm
+from app.forms import LoginForm, RegistrationForm, KeywordForm
 from werkzeug.urls import url_parse
 from flask_socketio import join_room
 import os
@@ -52,12 +52,12 @@ def register():
         return redirect(url_for('index'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data)
+        user = User(username=form.username.data, is_admin=False)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('Now login, please')
-        return redirect(url_for('login'))
+        login_user(user, remember=True)
+        return redirect(url_for('index'))
     return render_template('register.html', title='Register', form=form)
 
 
@@ -91,3 +91,28 @@ def create_room():
         db.session.commit()
         return str(room.id)
     return 'ti cho tipa hitry ochen?'
+
+
+@app.route('/become_admin', methods=['GET', 'POST'])
+def become_admin():
+    if current_user.is_authenticated:
+        print('user!!!!!!!')
+        form = KeywordForm()
+        if request.method == 'GET':
+            return render_template('become_admin.html', title='GIVE ME POWER', form=form)
+        elif request.method == 'POST':
+            if form.validate_on_submit():
+                print('form')
+                key = form.data['keyword']
+                print(key)
+                if key == 'k3rnel-pan1c':
+                    print('pass')
+                    current_user.is_admin = 1
+                    db.session.add(current_user)
+                    db.session.commit()
+                    return redirect(url_for('index'))
+                else:
+                    return 'FAILED. WRONG KEY.'
+    else:
+        return redirect(url_for('register'))
+

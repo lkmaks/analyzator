@@ -22,6 +22,7 @@
     var LINE_COLOR = 'black';
     var BOARD_LINE_WIDTH = 1.5;
     var WHITE_STONE_COLOR = '#ededed';
+    var BLACK_STONE_COLOR = '#2e2e2e';
 
     var STONE_RADIUS = div(STEP, 2) - 1;
 
@@ -123,7 +124,7 @@
     function clear_rect(i, j) {
         var ctx = board_context();
         ctx.fillStyle = BOARD_COLOR;
-        ctx.fillRect(STEP * j + div(STEP, 2), STEP * i + div(STEP, 2), STEP, STEP);
+        {#ctx.fillRect(STEP * j + div(STEP, 2), STEP * i + div(STEP, 2), STEP, STEP);#}
 
         ctx.fillStyle = LINE_COLOR;
         ctx.lineWidth = BOARD_LINE_WIDTH;
@@ -168,21 +169,34 @@
 
 
     function place_stone(i, j, color, text, text_color) {
+        console.log('Stone color: ' + color);
+        console.log('Text color: ' + text_color);
+        const white_stone = document.getElementById("white_stone");
+        const black_stone = document.getElementById("black_stone");
+        var x = (j + 1) * STEP - STEP / 2 + STEP / 20, y = (i + 1) * STEP - STEP / 2 + STEP / 20;
+        var w = STEP * 1.01, h = STEP * 1.01;
         ctx = board_context();
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        var x = (j + 1) * STEP, y = (i + 1) * STEP;
-        ctx.arc(x, y, STONE_RADIUS, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.fillStyle = 'black';
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-
+        if (color == BLACK_STONE_COLOR) {
+            ctx.drawImage(black_stone, x, y, w, h)
+        }
+        else {
+            ctx.drawImage(white_stone, x, y, w, h)
+        }
+        {#ctx = board_context();#}
+        {#ctx.fillStyle = color;#}
+        {#ctx.beginPath();#}
+        {#ctx.arc(x, y, STONE_RADIUS, 0, 2 * Math.PI);#}
+        {#ctx.fill();#}
+        {#ctx.fillStyle = 'black';#}
+        {#ctx.lineWidth = 0.5;#}
+        {#ctx.stroke();#}
+        {##}
+        var x_text = (j + 1) * STEP, y_text = (i + 1) * STEP;
         ctx.fillStyle = text_color;
-        ctx.font = "30px Verdana";
+        ctx.font = "20px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(text, x, y, STEP);
+        ctx.fillText(text, x_text, y_text, STEP);
     }
 
 
@@ -192,24 +206,11 @@
     }
 
 
-    function create_board () {
-        var tag = $('#board_container').get(0);
-        rescale_board(min(tag.offsetHeight, tag.offsetWidth));
+    function draw_empty_board() {
+        var ctx = board_context();
+        bg_img = document.getElementById("background");
 
-        var can = document.createElement('canvas');
-        can.id = 'board';
-        can.width = STEP * 16;
-        can.height = STEP * 16;
-
-        tag.appendChild(can);
-
-
-        var ctx = can.getContext("2d");
-        ctx.translate(0.5, 0.5);
-
-        ctx.fillStyle = BOARD_COLOR;
-        ctx.lineWidth = BOARD_LINE_WIDTH;
-        ctx.fillRect(LEFT_X, TOP_Y, STEP * (SIZE + 1), STEP * (SIZE + 1));
+        ctx.drawImage(bg_img, LEFT_X, TOP_Y, STEP * (SIZE + 1), STEP * (SIZE + 1));
 
         ctx.fillStyle = LINE_COLOR;
         for (var i = 0; i < SIZE; ++i) {
@@ -223,9 +224,48 @@
             ctx.lineTo(LEFT_X + (i + 1) * STEP, TOP_Y + STEP * SIZE);
             ctx.stroke();
         }
-
     }
 
+    function create_board () {
+        var tag = $('#board_container').get(0);
+        rescale_board(min(tag.offsetHeight, tag.offsetWidth));
+
+        var can = document.createElement('canvas');
+        can.id = 'board';
+        can.width = STEP * 16;
+        can.height = STEP * 16;
+
+        tag.appendChild(can);
+
+        var ctx = can.getContext("2d");
+        ctx.translate(0.5, 0.5);
+
+        ctx.fillStyle = BOARD_COLOR;
+        ctx.lineWidth = BOARD_LINE_WIDTH;
+        {#ctx.fillRect(LEFT_X, TOP_Y, STEP * (SIZE + 1), STEP * (SIZE + 1));#}
+        bg_img = document.getElementById("background");
+
+        draw_empty_board(ctx, bg_img);
+    }
+
+
+    function render_board() {
+        console.log('Call render_boar');
+        draw_empty_board();
+        var stone_color = BLACK_STONE_COLOR;
+        var opp_color = WHITE_STONE_COLOR;
+        for (var i = 0; i < CNT; ++i) {
+            var x = STACK_POS[i][0];
+            var y = STACK_POS[i][1];
+            console.log(stone_color);
+            console.log(opp_color);
+            place_stone(x, y, stone_color, i + 1, opp_color);
+            [stone_color, opp_color] = [opp_color, stone_color];
+            console.log(stone_color);
+            console.log(opp_color);
+            console.log('!!!');
+        }
+    }
 
     function undo() {
         if (CNT > 0) {
@@ -234,20 +274,22 @@
             CNT -= 1;
             ARR_POS[x][y] = 0;
             STACK_POS.pop();
-            clear_rect(x, y);
+            //clear_rect(x, y);
         }
+        render_board();
     }
 
     function add_stone(i, j) {
-        if (CNT % 2 == 0) {
+        /*if (CNT % 2 == 0) {
             place_stone(i, j, 'black', CNT + 1, WHITE_STONE_COLOR);
         }
         else {
             place_stone(i, j, WHITE_STONE_COLOR, CNT + 1, 'black');
-        }
+        }*/
         CNT += 1;
         ARR_POS[i][j] = CNT % 2 + 1;
         STACK_POS.push([i, j]);
+        render_board();
     }
 
     function undo_until(i, j) {
@@ -257,8 +299,9 @@
             CNT -= 1;
             ARR_POS[x][y] = 0;
             STACK_POS.pop();
-            clear_rect(x, y);
+            //clear_rect(x, y);
         }
+        render_board();
     }
 
 
@@ -360,6 +403,13 @@
             {% endfor %}
         </div>
     </div>
+
+    <div style="display:none;">
+        <img id="white_stone" src="{{ url_for('static', filename = 'w_succ.png') }}" width="500" height="500" />
+        <img id="black_stone" src="{{ url_for('static', filename = 'b_succ.png') }}" width="500" height="500" />
+        <img id="background" src="{{ url_for('static', filename = 'lightwoodbackground.jpg') }}" width="500" height="500" />
+    </div>
+
 </div>
 
 

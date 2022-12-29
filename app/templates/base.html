@@ -31,9 +31,20 @@
                     {% endif %}
                     </span>
                 </p></li>
+
+{#            {% if current_user.is_admin %}#}
+{#                <li>#}
+{#                <p class="navbar-text"> admin access </div>#}
+{#                </li>#}
+{#            {% endif %}#}
+
                 <li><a href="{{ url_for('index') }}" class="navbar-btn">Home</a></li>
+
             </ul>
             <ul class="nav navbar-nav navbar-right">
+                {% if current_user.is_admin %}
+                <li><p class="navbar-text" style="color: darkblue;">admin access active</p></li>
+                {% endif %}
                 {% if current_user.is_anonymous %}
                 <li><a href="{{ url_for('register') }}" id="register_link" class="right-navbar navbar-btn">Register</a></li>
                 <li><a href="{{ url_for('login') }}" class="right-navbar navbar-btn">Login</a></li>

@@ -1,0 +1,15 @@
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% if not current_user.username %}
+    <p class="alert alert-info">Log in first, boy.</p>
+{% endif %}
+
+{% if current_user.username %}
+<div id="content">
+<h1>Give me the keyword</h1>
+<div class="keyword_form">
+    {{ wtf.quick_form(form) }}
+</div>
+</div>
+{% endif %}
+

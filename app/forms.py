@@ -18,8 +18,8 @@ class LoginForm(FlaskForm):
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
-    password = StringField('Password', validators=[DataRequired()])
-    password2 = StringField('Confirm password', validators=[DataRequired(), EqualTo('password')])
+    password = PasswordField('Password', validators=[DataRequired()])
+    password2 = PasswordField('Confirm password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
 
     def validate_username(self, username):
@@ -40,6 +40,21 @@ class RegistrationForm(FlaskForm):
 
     def validate_password(self, password):
         if len(password.data) > 20:
-            raise ValidationError('Password is too long')
+            raise ValidationError('Password is too long (need <= 20 symbols)')
         if len(password.data) < 5:
-            raise ValidationError('Password is too short')
+            raise ValidationError('Password is too short (need >= 5 symbols)')
+
+
+class KeywordForm(FlaskForm):
+    keyword = StringField('keyword', validators=[DataRequired()])
+
+    def validate_keyword(self, keyword):
+        if not (0 < len(keyword.data) and len(keyword.data) < 20):
+            raise ValidationError('bad length')
+        alpha = string.ascii_letters + string.digits + '_-*&'
+        for c in str(keyword.data):
+            if not c in alpha:
+                raise ValidationError('Username contains restricted characters')
+
+
+

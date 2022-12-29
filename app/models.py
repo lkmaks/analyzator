@@ -33,6 +33,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     temp = db.relationship('TemporaryUser', backref='user', lazy='dynamic')
+    is_admin = db.Column(db.Integer)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
