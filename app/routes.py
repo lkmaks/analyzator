@@ -2,7 +2,7 @@ from app import app, db
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_user, logout_user
 from app.models import User, Room, TemporaryUser
-from app.forms import LoginForm, RegistrationForm, KeywordForm
+from app.forms import LoginForm, RegistrationForm, KeywordForm, CreateTableForm
 from werkzeug.urls import url_parse
 from flask_socketio import join_room
 import os
@@ -24,9 +24,19 @@ def dated_url_for(endpoint, **values):
 
 
 @app.route('/')
-@app.route('/index')
+@app.route('/index', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html', rooms=Room.query.all())
+    form = CreateTableForm()
+    if request.method == 'GET':
+        return render_template('index.html', rooms=Room.query.all(), form=form)
+    else:
+        if form.validate_on_submit():
+            room = Room(position='')
+            room.name = form.data['name']
+            db.session.add(room)
+            db.session.commit()
+            return render_template(url_for('index'))
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

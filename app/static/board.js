@@ -37,18 +37,40 @@ class Board {
         this.users_in = new Set();
 
         var rooms_tag = $('#rooms').get(0);
+
         this.containing_element = document.createElement('div');
         this.containing_element.setAttribute('id', 'room_box_' + this.room_id);
         this.containing_element.setAttribute('class', 'big_table panel panel-default');
         rooms_tag.appendChild(this.containing_element);
 
-        this.rescale(min(this.containing_element.offsetHeight, this.containing_element.offsetWidth));
+        this.upper = document.createElement('div');
+        this.upper.setAttribute('id', 'room_lower_box_' + this.room_id);
+        this.upper.setAttribute('class', 'upper_container panel panel-default');
+        this.containing_element.appendChild(this.upper);
+
+        this.lower = document.createElement('div');
+        this.lower.setAttribute('id', 'room_lower_box_' + this.room_id);
+        this.lower.setAttribute('class', 'lower_container panel panel-default');
+        this.containing_element.appendChild(this.lower);
+
+        this.room_id_p = document.createElement('p');
+        this.room_id_p.textContent += 'Room #' + room_id;
+        this.room_id_p.setAttribute('style', 'display: inline-block; margin: 5px');
+        this.lower.appendChild(this.room_id_p);
+
+        this.join_button = document.createElement('a');
+        this.join_button.setAttribute('href', '/room?id=' + room_id);
+        this.join_button.setAttribute('class', 'btn btn-default');
+        this.join_button.textContent += 'join';
+        this.lower.appendChild(this.join_button);
 
         this.can = document.createElement('canvas');
         this.can.setAttribute('id', 'room_' + this.room_id);
+        this.upper.appendChild(this.can);
+        this.rescale(min(this.upper.offsetHeight, this.upper.offsetWidth));
         this.can.width = this.STEP * 16;
         this.can.height = this.STEP * 16;
-        this.containing_element.appendChild(this.can);
+
         this.render();
     }
 
@@ -149,7 +171,7 @@ class Board {
 
         var x_text = (j + 1) * this.STEP, y_text = (i + 1) * this.STEP;
         ctx.fillStyle = text_color;
-        ctx.font = "20px Arial";
+        ctx.font = "12px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(text, x_text, y_text, this.STEP);

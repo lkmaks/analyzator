@@ -25,6 +25,28 @@
     display: inline-block
 }
 
+
+.upper_container {
+    padding: 10px;
+    margin: 0px;
+    width: 370px;
+    height: 330px;
+    text-align: center;
+    display: inline-block
+}
+
+.lower_container {
+    padding: 3px;
+    margin: 5px;
+    width: 300px;
+    height: 40px;
+    text-align: center;
+    display: inline-block
+}
+
+
+
+
 #rooms {
     position: absolute;
     left: 220px;

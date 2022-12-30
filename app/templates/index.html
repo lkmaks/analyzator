@@ -2,117 +2,125 @@
 
 {% block app_content %}
 
-<script>
-    $(function() {
-        $('#new_room').click(function () {
-            $.post("{{ url_for('create_room') }}",
-                function (res) {
-                    /*
-                    var link = "{{ url_for('room')}}";
-                    link += '?id=' + res;
-                    $('#rooms').append(`<a href="${link}">Room #${res}</a>`);
-                    */
-                    window.location.replace("{{ url_for('room') }}" + '?id=' + res);
-                });
-
-            $('#room_name').val('');
-        });
-    });
-</script>
-
 {% if not current_user.username %}
     <p class="alert alert-info">In order to join or create a table you should register and login</p>
 {% endif %}
 
 {% if current_user.username %}
 
-{% if current_user.is_admin %}
-<script type="text/javascript" src="{{ url_for('static', filename='board.js') }}"></script>
-<script>
-    var socket = io.connect();
-    var boards = {};
+    {% if current_user.is_admin %}
+        {#   admin page scripts   #}
 
-    socket.on('lobby/rooms_added', function(mes) {
-        // room_id1;room_id2;...
-        console.log(mes);
-        var arr = mes.split(';');
-        for (var i = 0; i < arr.length; ++i) {
-            room_id = parseInt(arr[i]);
-            boards[room_id] = new Board(room_id);
-        }
-    });
+        <script>
+        $(function() {
+            $('#new_room').click(function () {
+                $.post("{{ url_for('create_room') }}",
+                    function (res) {
+                        /*
+                        var link = "{{ url_for('room')}}";
+                        link += '?id=' + res;
+                        $('#rooms').append(`<a href="${link}">Room #${res}</a>`);
+                        */
+                        window.location.replace("{{ url_for('room') }}" + '?id=' + res);
+                    });
 
-    socket.on('lobby/pos_data', function (mes) {
-        console.log('POS_DATA');
-        console.log(mes);
-        var arr = mes.split(';');
-        var room_id = parseInt(arr[0]);
-        for (var i = 1; i < arr.length - 1; i += 2) {
-            boards[room_id].add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
-        }
-    });
+                $('#room_name').val('');
+            });
+        });
+        </script>
 
-    socket.on('lobby/board_event', function (mes) {
-        var arr = mes.split(';');
-        var board_id = parseInt(arr[0]);
-        var info = arr;
-        info = info.slice(1, info.length);
-        if (info[0] === 'undo') {
-            boards[board_id].undo();
-        }
-        else {
-            if (info.length === 3) {
-                i = parseInt(info[1]);
-                j = parseInt(info[2]);
-                if (info[0] === "add_stone") {
-                    boards[board_id].add_stone(i, j);
+        <script type="text/javascript" src="{{ url_for('static', filename='board.js') }}"></script>
+
+        <script>
+            var socket = io.connect();
+            var boards = {};
+
+            socket.on('lobby/rooms_added', function(mes) {
+                // room_id1;room_id2;...
+                console.log(mes);
+                var arr = mes.split(';');
+                for (var i = 0; i < arr.length; ++i) {
+                    room_id = parseInt(arr[i]);
+                    boards[room_id] = new Board(room_id);
                 }
-                else if (info[0] === 'undo_until') {
-                    boards[board_id].undo_until(i, j);
+            });
+
+            socket.on('lobby/pos_data', function (mes) {
+                console.log('POS_DATA');
+                console.log(mes);
+                var arr = mes.split(';');
+                var room_id = parseInt(arr[0]);
+                for (var i = 1; i < arr.length - 1; i += 2) {
+                    boards[room_id].add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
                 }
-            }
-        }
-    });
+            });
 
-    socket.on('lobby/user_event', function (mes) {
-        var arr = mes.split(';');
-        var board_id = parseInt(arr[0]);
-        if (arr[1].slice(0, 4) === 'new:') {
-            boards[board_id].add_user(board_id, arr[1].slice(4));
-        }
-        else if (arr[1].slice(0, 6) === 'leave:') {
-            boards[board_id].remove_user(board_id, arr[1].slice(6));
-        }
-    });
+            socket.on('lobby/board_event', function (mes) {
+                var arr = mes.split(';');
+                var board_id = parseInt(arr[0]);
+                var info = arr;
+                info = info.slice(1, info.length);
+                if (info[0] === 'undo') {
+                    boards[board_id].undo();
+                }
+                else {
+                    if (info.length === 3) {
+                        i = parseInt(info[1]);
+                        j = parseInt(info[2]);
+                        if (info[0] === "add_stone") {
+                            boards[board_id].add_stone(i, j);
+                        }
+                        else if (info[0] === 'undo_until') {
+                            boards[board_id].undo_until(i, j);
+                        }
+                    }
+                }
+            });
 
-    socket.emit('lobby/watching_lobby', create_mes('join'));
+            socket.on('lobby/user_event', function (mes) {
+                var arr = mes.split(';');
+                var board_id = parseInt(arr[0]);
+                if (arr[1].slice(0, 4) === 'new:') {
+                    boards[board_id].add_user(board_id, arr[1].slice(4));
+                }
+                else if (arr[1].slice(0, 6) === 'leave:') {
+                    boards[board_id].remove_user(board_id, arr[1].slice(6));
+                }
+            });
 
-</script>
+            socket.emit('lobby/watching_lobby', create_mes('join'));
 
-{% endif %}
-
-<div id="content">
-    <div id="left_panel_index">
-        <button id="new_room" class="create_room_btn btn-default">Create new room</button>
-    </div>
-
-    {% if not current_user.is_admin %}
-        <div id="rooms">
-        {% for room in rooms %}
-            <div class="table panel panel-default" id="board_{{room.id}}">
-                <h3>Room <span color="red">#{{room.id}}</span></h3>
-                <a href="{{ url_for('room') + '?id=' ~ room.id}}" class="btn btn-default" style="font-size: 15px">Join</a>
-            </div>
-        {% endfor %}
-        </div>
-    {% else %}
-        <div id="rooms">
-
-        </div>
+        </script>
     {% endif %}
 
+    <div id="content">
+        {% if current_user.is_admin %}
+            <div id="left_panel_index">
+                <div class="add_table_form">
+                <p>Add table</p>
+                <br>
+                {{ wtf.quick_form(form) }}
+            </div>
+            </div>
+        {% endif %}
 
-</div>
+        {% if not current_user.is_admin %}
+            <div id="rooms">
+            {% for room in rooms %}
+                <div class="table panel panel-default" id="board_{{room.id}}">
+                    <h3>Room <span color="red">#{{room.id}}</span></h3>
+                    <a href="{{ url_for('room') + '?id=' ~ room.id}}" class="btn btn-default" style="font-size: 15px">Join</a>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div id="rooms">
+
+            </div>
+        {% endif %}
+    </div>
+
+{% endif %}
 
 <div style="display:none;">
     <img id="white_stone" src="{{ url_for('static', filename = 'w_succ.png') }}" width="500" height="500" />
@@ -121,6 +129,5 @@
 </div>
 
 
-{% endif %}
 
 {% endblock %}

@@ -57,4 +57,19 @@ class KeywordForm(FlaskForm):
                 raise ValidationError('Username contains restricted characters')
 
 
+class CreateTableForm(FlaskForm):
+    name = StringField('name', validators=[DataRequired()], default='renju table')
+
+    def validate_name(self, keyword):
+        if not (0 < len(keyword.data) and len(keyword.data) < 20):
+            raise ValidationError('bad length')
+        alpha = string.ascii_letters + string.digits + '_-*&'
+        for c in str(keyword.data):
+            if not c in alpha:
+                raise ValidationError('Username contains restricted characters')
+
+
+
+
+
 

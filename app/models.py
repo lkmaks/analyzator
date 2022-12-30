@@ -12,6 +12,7 @@ def load_user(id):
 
 class Room(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(500), primary_key=True)
     position = db.Column(db.String(500))
     users = db.relationship('TemporaryUser', backref='room', lazy='dynamic')
 
