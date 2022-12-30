@@ -16,6 +16,15 @@
     display: inline-block
 }
 
+.big_table {
+    padding: 10px;
+    margin: 10px;
+    width: 600px;
+    height: 600px;
+    text-align: center;
+    display: inline-block
+}
+
 #rooms {
     position: absolute;
     left: 220px;

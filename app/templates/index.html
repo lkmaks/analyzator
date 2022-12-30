@@ -25,20 +25,100 @@
 {% endif %}
 
 {% if current_user.username %}
+
+{% if current_user.is_admin %}
+<script type="text/javascript" src="{{ url_for('static', filename='board.js') }}"></script>
+<script>
+    var socket = io.connect();
+    var boards = {};
+
+    socket.on('rooms_added', function(mes) {
+        // room_id1;room_id2;...
+        console.log(mes);
+        var arr = mes.split(';');
+        for (var i = 0; i < arr.length; ++i) {
+            boards[arr[i]] = new Board(arr[i]);
+        }
+    });
+
+    socket.on('pos_data', function (mes) {
+        var arr = mes.split(';');
+        var board_id = parseInt(arr[0]);
+        for (var i = 1; i < arr.length - 1; i += 2) {
+            boards[board_id].add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
+        }
+        render_board(board_id);
+    });
+
+    socket.on('board_event', function (mes) {
+        var arr = mes.split(';');
+        var board_id = parseInt(arr[0]);
+        var info = arr;
+        info = info.slice(1, info.length);
+        if (info[0] === 'undo') {
+            boards[board_id].undo();
+        }
+        else {
+            if (info.length === 3) {
+                i = parseInt(info[1]);
+                j = parseInt(info[2]);
+                if (info[0] === "add_stone") {
+                    boards[board_id].add_stone(i, j);
+                }
+                else if (info[0] === 'undo_until') {
+                    boards[board_id].undo_until(i, j);
+                }
+            }
+        }
+    });
+
+    socket.on('user_event', function (mes) {
+        var arr = mes.split(';');
+        var board_id = parseInt(arr[0]);
+        if (arr[1].slice(0, 4) === 'new:') {
+            boards[board_id].add_user(board_id, arr[1].slice(4));
+        }
+        else if (arr[1].slice(0, 6) === 'leave:') {
+            boards[board_id].remove_user(board_id, arr[1].slice(6));
+        }
+    });
+
+    socket.emit('watching_lobby', create_mes('join'));
+
+</script>
+
+{% endif %}
+
 <div id="content">
     <div id="left_panel_index">
         <button id="new_room" class="create_room_btn btn-default">Create new room</button>
     </div>
 
-    <div id="rooms">
-    {% for room in rooms %}
-        <div class="table panel panel-default">
-            <h3>Room <span color="red">#{{room.id}}</span></h3>
-            <a href="{{ url_for('room') + '?id=' ~ room.id}}" class="btn btn-default" style="font-size: 15px">Join</a>
+    {% if not current_user.is_admin %}
+        <div id="rooms">
+        {% for room in rooms %}
+            <div class="table panel panel-default" id="board_{{room.id}}">
+                <h3>Room <span color="red">#{{room.id}}</span></h3>
+                <a href="{{ url_for('room') + '?id=' ~ room.id}}" class="btn btn-default" style="font-size: 15px">Join</a>
+            </div>
+        {% endfor %}
         </div>
-    {% endfor %}
-    </div>
+    {% else %}
+        <div id="rooms">
+
+        </div>
+    {% endif %}
+
+
 </div>
+
+<div style="display:none;">
+    <img id="white_stone" src="{{ url_for('static', filename = 'w_succ.png') }}" width="500" height="500" />
+    <img id="black_stone" src="{{ url_for('static', filename = 'b_succ.png') }}" width="500" height="500" />
+    <img id="background" src="{{ url_for('static', filename = 'lightwoodbackground.jpg') }}" width="500" height="500" />
+</div>
+
+
 {% endif %}
 
 {% endblock %}

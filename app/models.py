@@ -16,7 +16,7 @@ class Room(db.Model):
     users = db.relationship('TemporaryUser', backref='room', lazy='dynamic')
 
     def __repr__(self):
-        return self.position
+        return "Room {}, pos: {}".format(self.id, self.position)
 
 
 class TemporaryUser(db.Model):

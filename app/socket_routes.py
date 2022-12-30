@@ -5,6 +5,8 @@ from flask_login import current_user
 from app.models import Room
 from app import db
 import html
+from sqlalchemy.orm.session import Session
+from sqlalchemy import select
 
 
 @socketio.on('board_event')
@@ -61,3 +63,11 @@ def disconnect():
     db.session.delete(current_user.temp.first())
     db.session.commit()
 
+
+@socketio.on('watching_lobby')
+def watching_lobby(mes):
+    rooms = Room.query.all()
+    room_ids = []
+    for r in rooms:
+        room_ids.append(r.id)
+    emit('rooms_added', ';'.join((str(d) for d in room_ids)))
