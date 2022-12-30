@@ -32,25 +32,27 @@
     var socket = io.connect();
     var boards = {};
 
-    socket.on('rooms_added', function(mes) {
+    socket.on('lobby/rooms_added', function(mes) {
         // room_id1;room_id2;...
         console.log(mes);
         var arr = mes.split(';');
         for (var i = 0; i < arr.length; ++i) {
-            boards[arr[i]] = new Board(arr[i]);
+            room_id = parseInt(arr[i]);
+            boards[room_id] = new Board(room_id);
         }
     });
 
-    socket.on('pos_data', function (mes) {
+    socket.on('lobby/pos_data', function (mes) {
+        console.log('POS_DATA');
+        console.log(mes);
         var arr = mes.split(';');
-        var board_id = parseInt(arr[0]);
+        var room_id = parseInt(arr[0]);
         for (var i = 1; i < arr.length - 1; i += 2) {
-            boards[board_id].add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
+            boards[room_id].add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
         }
-        render_board(board_id);
     });
 
-    socket.on('board_event', function (mes) {
+    socket.on('lobby/board_event', function (mes) {
         var arr = mes.split(';');
         var board_id = parseInt(arr[0]);
         var info = arr;
@@ -72,7 +74,7 @@
         }
     });
 
-    socket.on('user_event', function (mes) {
+    socket.on('lobby/user_event', function (mes) {
         var arr = mes.split(';');
         var board_id = parseInt(arr[0]);
         if (arr[1].slice(0, 4) === 'new:') {
@@ -83,7 +85,7 @@
         }
     });
 
-    socket.emit('watching_lobby', create_mes('join'));
+    socket.emit('lobby/watching_lobby', create_mes('join'));
 
 </script>
 

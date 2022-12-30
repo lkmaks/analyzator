@@ -38,14 +38,14 @@ class Board {
 
         var rooms_tag = $('#rooms').get(0);
         this.containing_element = document.createElement('div');
-        this.containing_element.setAttribute('id', 'board_box_' + toString(this.board_id));
+        this.containing_element.setAttribute('id', 'room_box_' + this.room_id);
         this.containing_element.setAttribute('class', 'big_table panel panel-default');
         rooms_tag.appendChild(this.containing_element);
 
         this.rescale(min(this.containing_element.offsetHeight, this.containing_element.offsetWidth));
 
         this.can = document.createElement('canvas');
-        this.can.id = 'board_' + toString(this.board_id);
+        this.can.setAttribute('id', 'room_' + this.room_id);
         this.can.width = this.STEP * 16;
         this.can.height = this.STEP * 16;
         this.containing_element.appendChild(this.can);
@@ -53,14 +53,14 @@ class Board {
     }
 
     get_context() {
-        var can = document.getElementById('board_' + toString(this.board_id));
+        var can = document.getElementById('room_' + this.room_id);
         return can.getContext("2d");
     }
 
     undo() {
         if (this.CNT > 0) {
-            var x = this.STACK_POS[CNT - 1][0];
-            var y = this.STACK_POS[CNT - 1][1];
+            var x = this.STACK_POS[this.CNT - 1][0];
+            var y = this.STACK_POS[this.CNT - 1][1];
             this.CNT -= 1;
             this.ARR_POS[x][y] = 0;
             this.STACK_POS.pop();
@@ -69,9 +69,9 @@ class Board {
     }
 
     undo_until(i, j) {
-        while (!(this.STACK_POS[CNT - 1][0] === i && this.STACK_POS[CNT - 1][1] === j)) {
-            var x = this.STACK_POS[CNT - 1][0];
-            var y = this.STACK_POS[CNT - 1][1];
+        while (!(this.STACK_POS[this.CNT - 1][0] === i && this.STACK_POS[this.CNT - 1][1] === j)) {
+            var x = this.STACK_POS[this.CNT - 1][0];
+            var y = this.STACK_POS[this.CNT - 1][1];
             this.CNT -= 1;
             this.ARR_POS[x][y] = 0;
             this.STACK_POS.pop();
@@ -80,8 +80,9 @@ class Board {
     }
 
     add_stone(i, j) {
+        console.log(this.room_id, i, j);
         this.CNT += 1;
-        this.ARR_POS[i][j] = CNT % 2 + 1;
+        this.ARR_POS[i][j] = this.CNT % 2 + 1;
         this.STACK_POS.push([i, j]);
         this.render();
     }
@@ -131,7 +132,8 @@ class Board {
         }
     }
 
-    draw_stone(board_id, i, j, color, text, text_color) {
+    draw_stone(i, j, color, text, text_color) {
+        console.log('DRAW', i, j);
         var ctx = this.get_context();
         const white_stone = document.getElementById("white_stone");
         const black_stone = document.getElementById("black_stone");
@@ -139,7 +141,7 @@ class Board {
         var x = (j + 1) * this.STEP - this.STEP / 2 + this.STEP / 20, y = (i + 1) * this.STEP - this.STEP / 2 + this.STEP / 20;
         var w = this.STEP * 1.01, h = this.STEP * 1.01;
 
-        if (color === this.BLACK_STONE_COLOR) {
+        if (color === 'black') {
             ctx.drawImage(black_stone, x, y, w, h)
         } else {
             ctx.drawImage(white_stone, x, y, w, h)

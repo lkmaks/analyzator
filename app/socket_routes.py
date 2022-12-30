@@ -14,6 +14,7 @@ def board_event(data):
     mes = data['mes']
     room = data['room']
     emit('board_event', mes, room=room)
+    emit('lobby/board_event', room + ';' + mes, room='lobby')
 
     pos = Room.query.get(room).position
     arr = mes.split(';')
@@ -46,9 +47,10 @@ def board_event(data):
 def room_entry(data):
     if data['mes'] == 'join':
         join_room(data['room'])
-        pos =  Room.query.get(data['room']).position
+        pos = Room.query.get(data['room']).position
         emit('pos_data', pos)
-        emit('room_event', 'new:' + current_user.username, room=data['room'])
+        emit('room_event', data['room'] + ';' + 'new:' + current_user.username, room=data['room'])
+        emit('lobby/room_event', data['room'] + 'new:' + current_user.username, room='lobby')
 
 
 @socketio.on('chat_event')
@@ -58,16 +60,25 @@ def chat_event(mes):
 
 
 @socketio.on('disconnect_event')
-def disconnect():
-    emit('room_event', 'leave:' + current_user.username, room=str(current_user.temp.first().room_id))
+def disconnect(data):
+    emit('room_event', data['room'] + 'leave:' + current_user.username, room=str(current_user.temp.first().room_id))
+    emit('lobby/room_event', data['room'] + 'leave:' + current_user.username, room='lobby')
     db.session.delete(current_user.temp.first())
     db.session.commit()
 
 
-@socketio.on('watching_lobby')
+import flask
+
+@socketio.on('lobby/watching_lobby')
 def watching_lobby(mes):
     rooms = Room.query.all()
     room_ids = []
     for r in rooms:
         room_ids.append(r.id)
-    emit('rooms_added', ';'.join((str(d) for d in room_ids)))
+    emit('lobby/rooms_added', ';'.join((str(d) for d in room_ids)))
+    for r in rooms:
+        pos = r.position
+        emit('lobby/pos_data', str(r.id) + ';' + pos)
+    join_room('lobby')
+
+
