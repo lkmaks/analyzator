@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
 
@@ -36,12 +37,15 @@
             var boards = {};
 
             socket.on('lobby/rooms_added', function(mes) {
-                // room_id1;room_id2;...
-                console.log(mes);
-                var arr = mes.split(';');
-                for (var i = 0; i < arr.length; ++i) {
-                    room_id = parseInt(arr[i]);
-                    boards[room_id] = new Board(room_id);
+                if (mes.length > 0) {
+                    // room_id1;room_id2;...
+                    console.log(arr);
+                    var arr = mes.split(';');
+                    for (var i = 0; i < arr.length; i += 2) {
+                        room_id = parseInt(arr[i]);
+                        room_name = arr[i + 1];
+                        boards[room_id] = new Board(room_id, room_name);
+                    }
                 }
             });
 
@@ -49,9 +53,11 @@
                 console.log('POS_DATA');
                 console.log(mes);
                 var arr = mes.split(';');
-                var room_id = parseInt(arr[0]);
-                for (var i = 1; i < arr.length - 1; i += 2) {
-                    boards[room_id].add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
+                if (arr.length > 1) {
+                    var room_id = parseInt(arr[0]);
+                    for (var i = 1; i < arr.length - 1; i += 2) {
+                        boards[room_id].add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
+                    }
                 }
             });
 
@@ -97,7 +103,7 @@
         {% if current_user.is_admin %}
             <div id="left_panel_index">
                 <div class="add_table_form">
-                <p>Add table</p>
+                <h1 style="font-size: 20px; text-align: center">Add table</h1>
                 <br>
                 {{ wtf.quick_form(form) }}
             </div>

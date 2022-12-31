@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectMultipleField
 from wtforms.validators import DataRequired, EqualTo, ValidationError
 from app.models import User
 import string
@@ -57,13 +57,20 @@ class KeywordForm(FlaskForm):
                 raise ValidationError('Username contains restricted characters')
 
 
+def AllChars():
+    rus = 'АаБбВвГгДдЕеЁёЖжЗзИиЙйКкЛлМмНнОоПпРрСсТтУуФфХхЦцЧчШшЩщЪъЫыЬьЭэЮюЯя'
+    return string.printable + rus
+
+
 class CreateTableForm(FlaskForm):
-    name = StringField('name', validators=[DataRequired()], default='renju table')
+    name = StringField('name', validators=[DataRequired()])
+    submit = SubmitField('Create table')
+    users_allowed = SelectMultipleField(choices=[('1', 'All')])
 
     def validate_name(self, keyword):
         if not (0 < len(keyword.data) and len(keyword.data) < 20):
             raise ValidationError('bad length')
-        alpha = string.ascii_letters + string.digits + '_-*&'
+        alpha = AllChars()
         for c in str(keyword.data):
             if not c in alpha:
                 raise ValidationError('Username contains restricted characters')

@@ -15,7 +15,7 @@ function min (a, b) {
 
 
 class Board {
-    constructor(room_id) {
+    constructor(room_id, room_name) {
         this.STEP = 50;
         this.STONE_RADIUS = div(this.STEP, 2) - 1;
         this.LEFT_X = 0;
@@ -34,6 +34,7 @@ class Board {
             }
         }
         this.room_id = room_id;
+        this.room_name = room_name;
         this.users_in = new Set();
 
         var rooms_tag = $('#rooms').get(0);
@@ -58,11 +59,34 @@ class Board {
         this.room_id_p.setAttribute('style', 'display: inline-block; margin: 5px');
         this.lower.appendChild(this.room_id_p);
 
+        this.room_name_p = document.createElement('p');
+        this.room_name_p.textContent += this.room_name;
+        this.room_name_p.setAttribute('style', 'display: inline-block; margin: 5px');
+        this.lower.appendChild(this.room_name_p);
+
         this.join_button = document.createElement('a');
         this.join_button.setAttribute('href', '/room?id=' + room_id);
         this.join_button.setAttribute('class', 'btn btn-default');
         this.join_button.textContent += 'join';
         this.lower.appendChild(this.join_button);
+
+        this.delete_button = document.createElement('a');
+        this.delete_button.setAttribute('class', 'btn btn-default');
+        this.delete_button.setAttribute('style', 'background-color: red');
+        this.delete_button.setAttribute('id', 'delete_room_' + room_id);
+        this.delete_button.textContent += 'delete';
+        this.lower.appendChild(this.delete_button);
+
+        var cte = this.containing_element;
+
+        $('#delete_room_' + room_id).on("click", function(event) {
+            $.ajax({
+                url: "/delete_room?id=" + room_id,
+                success: function(result) {
+                    cte.remove();
+                }
+            })
+        });
 
         this.can = document.createElement('canvas');
         this.can.setAttribute('id', 'room_' + this.room_id);

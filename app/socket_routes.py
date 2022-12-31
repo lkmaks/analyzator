@@ -13,6 +13,10 @@ from sqlalchemy import select
 def board_event(data):
     mes = data['mes']
     room = data['room']
+
+    if Room.query.get(room) is None:
+        return
+
     emit('board_event', mes, room=room)
     emit('lobby/board_event', room + ';' + mes, room='lobby')
 
@@ -60,9 +64,9 @@ def chat_event(mes):
 
 
 @socketio.on('disconnect_event')
-def disconnect(data):
-    emit('room_event', data['room'] + 'leave:' + current_user.username, room=str(current_user.temp.first().room_id))
-    emit('lobby/room_event', data['room'] + 'leave:' + current_user.username, room='lobby')
+def disconnect():
+    # emit('room_event', data['room'] + 'leave:' + current_user.username, room=str(current_user.temp.first().room_id))
+    # emit('lobby/room_event', data['room'] + 'leave:' + current_user.username, room='lobby')
     db.session.delete(current_user.temp.first())
     db.session.commit()
 
@@ -72,10 +76,15 @@ import flask
 @socketio.on('lobby/watching_lobby')
 def watching_lobby(mes):
     rooms = Room.query.all()
-    room_ids = []
+
+    data = []
     for r in rooms:
-        room_ids.append(r.id)
-    emit('lobby/rooms_added', ';'.join((str(d) for d in room_ids)))
+        data.append(str(r.id))
+        data.append(str(r.name))
+        print(r.name)
+
+    emit('lobby/rooms_added', ';'.join(data))
+
     for r in rooms:
         pos = r.position
         emit('lobby/pos_data', str(r.id) + ';' + pos)

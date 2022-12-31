@@ -27,6 +27,10 @@ def dated_url_for(endpoint, **values):
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     form = CreateTableForm()
+    users = User.query.all()
+    for i in range(len(users)):
+        form.users_allowed.choices.append((str(i + 2), users[i].username))
+
     if request.method == 'GET':
         return render_template('index.html', rooms=Room.query.all(), form=form)
     else:
@@ -35,7 +39,7 @@ def index():
             room.name = form.data['name']
             db.session.add(room)
             db.session.commit()
-            return render_template(url_for('index'))
+        return redirect(url_for('index'))
 
 
 
@@ -125,4 +129,13 @@ def become_admin():
                     return 'FAILED. WRONG KEY.'
     else:
         return redirect(url_for('register'))
+
+
+@app.route('/delete_room', methods=['GET'])
+def delete_room():
+    room_id = request.args.get('id')
+    Room.query.filter_by(id=room_id).delete()
+    db.session.commit()
+    return 'OK'
+
 
