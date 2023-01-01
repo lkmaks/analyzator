@@ -5,8 +5,6 @@ from flask_login import current_user
 from app.models import Room
 from app import db
 import html
-from sqlalchemy.orm.session import Session
-from sqlalchemy import select
 
 
 @socketio.on('board_event')
@@ -21,6 +19,11 @@ def board_event(data):
     emit('lobby/board_event', room + ';' + mes, room='lobby')
 
     pos = Room.query.get(room).position
+    pos_arr = list(map(int, pos.split(';')))
+    moves_present = set()
+    for i in range(0, len(pos), 2):
+        moves_present.add((pos_arr[i], pos_arr[i + 1]))
+
     arr = mes.split(';')
     if arr[0] == 'undo' and pos != '':
         i = len(pos) - 1
@@ -33,7 +36,8 @@ def board_event(data):
     elif arr[0] == 'add_stone':
         i = arr[1]
         j = arr[2]
-        pos += '{};{};'.format(i, j)
+        if (int(i), int(j)) not in moves_present:
+            pos += '{};{};'.format(i, j)
     elif arr[0] == 'undo_until':
         i = arr[1]
         j = arr[2]
@@ -64,9 +68,8 @@ def chat_event(mes):
 
 
 @socketio.on('disconnect_event')
-def disconnect():
-    # emit('room_event', data['room'] + 'leave:' + current_user.username, room=str(current_user.temp.first().room_id))
-    # emit('lobby/room_event', data['room'] + 'leave:' + current_user.username, room='lobby')
+def disconnect(room_id):
+    emit('lobby/user_left', room_id + ':' + current_user.username, room='lobby')
     db.session.delete(current_user.temp.first())
     db.session.commit()
 

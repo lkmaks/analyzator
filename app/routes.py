@@ -4,7 +4,7 @@ from flask_login import current_user, login_user, logout_user
 from app.models import User, Room, TemporaryUser
 from app.forms import LoginForm, RegistrationForm, KeywordForm, CreateTableForm
 from werkzeug.urls import url_parse
-from flask_socketio import join_room
+from flask_socketio import join_room, emit
 import os
 
 
@@ -103,6 +103,7 @@ def create_room():
         room = Room(position='')
         db.session.add(room)
         db.session.commit()
+        emit('lobby/rooms_added', str(room.id), 'lobby')
         return str(room.id)
     return 'ti cho tipa hitry ochen?'
 
@@ -136,6 +137,8 @@ def delete_room():
     room_id = request.args.get('id')
     Room.query.filter_by(id=room_id).delete()
     db.session.commit()
+    emit('room_deleted', str(room_id), room=str(room_id))
+    emit('lobby/room_deleted', str(room_id), room='lobby')
     return 'OK'
 
 
