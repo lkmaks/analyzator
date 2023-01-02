@@ -19,9 +19,11 @@ def board_event(data):
     emit('lobby/board_event', room + ';' + mes, room='lobby')
 
     pos = Room.query.get(room).position
-    pos_arr = list(map(int, pos.split(';')))
+
+    pos_arr = list(map(int, pos.split(';')[:-1]))
+
     moves_present = set()
-    for i in range(0, len(pos), 2):
+    for i in range(0, len(pos_arr), 2):
         moves_present.add((pos_arr[i], pos_arr[i + 1]))
 
     arr = mes.split(';')
@@ -107,7 +109,8 @@ def create_table(mes):
     room = Room(position='')
     room.name = name
     room.allowed_users = ';'.join(user_ids)
+
     db.session.add(room)
     db.session.commit()
-    emit('lobby/rooms_added', str(room.id) + ';' + room.name)
+    emit('lobby/rooms_added', str(room.id) + ';' + room.name, room='lobby')
 

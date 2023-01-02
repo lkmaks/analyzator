@@ -61,19 +61,33 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@app.route('/room', methods=['GET', 'POST'])
+@app.route('/room', methods=['GET'])
 def room():
     if not current_user.is_authenticated:
         return redirect(url_for('login', next=request.full_path))
-    if request.method == 'GET':
-        room_id = request.args.get('id')
-        if TemporaryUser.query.filter_by(user_id=current_user.id, room_id=room_id).first() is None \
-            and room_id != None:
-            tu = TemporaryUser(room_id=room_id, user=current_user)
-            db.session.add(tu)
-            db.session.commit()
-        return render_template('room.html', title='Room {}'.format(room_id),
-                               temp_users=TemporaryUser.query.filter_by(room_id=room_id).all())
+
+    room_id = request.args.get('id')
+    data = Room.query.get(room_id).allowed_users
+
+    if len(data) == 0:
+        # no allowed ids
+        flash('You are not allowed in that room')
+        return redirect('index')
+
+
+    allowed_user_ids = list(map(int, data.split(';')))
+
+    if 0 not in allowed_user_ids and current_user.id not in allowed_user_ids:
+        flash('You are not allowed in that room')
+        return redirect('index')
+
+    if TemporaryUser.query.filter_by(user_id=current_user.id, room_id=room_id).first() is None \
+        and room_id != None:
+        tu = TemporaryUser(room_id=room_id, user=current_user)
+        db.session.add(tu)
+        db.session.commit()
+    return render_template('room.html', title='Room {}'.format(room_id),
+                           temp_users=TemporaryUser.query.filter_by(room_id=room_id).all())
 
 
 @app.route('/logout')
@@ -81,17 +95,6 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-
-
-@app.route('/create_room', methods=['POST'])
-def create_room():
-    if current_user.is_authenticated:
-        room = Room(position='')
-        db.session.add(room)
-        db.session.commit()
-        emit('lobby/rooms_added', str(room.id), 'lobby')
-        return str(room.id)
-    return 'ti cho tipa hitry ochen?'
 
 
 @app.route('/become_admin', methods=['GET', 'POST'])
