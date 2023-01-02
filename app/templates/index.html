@@ -19,7 +19,7 @@
 
         socket.on('lobby/rooms_added', function(mes) {
             if (mes.length > 0) {
-                // room_id1;room_id2;...
+                // room_id1;room_name1;...
                 console.log(arr);
                 var arr = mes.split(';');
                 for (var i = 0; i < arr.length; i += 2) {

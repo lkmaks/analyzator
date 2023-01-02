@@ -53,6 +53,27 @@ def board_event(data):
     db.session.commit()
 
 
+@socketio.on('board_putpos')
+def putpos(data):
+    room_id, moves = data
+    str_moves = ';'.join(str(m) for m in moves) + ';'
+
+    paired = []
+    for i in range(0, len(moves), 2):
+        paired.append((moves[i], moves[i + 1]))
+
+    if len(paired) != len(set(paired)):
+        return
+
+    for move in paired:
+        if move[0] not in range(15) or move[1] not in range(15):
+            return
+
+    Room.query.get(room_id).position = str_moves
+    emit('board_putpos', moves, room=room_id)
+    db.session.commit()
+
+
 @socketio.on('room_event')
 def room_entry(data):
     if data['mes'] == 'join':
