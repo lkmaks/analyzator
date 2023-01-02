@@ -362,7 +362,7 @@
 
         $('#remove_numbers').click(function () {
             removeNumbers();
-        })
+        });
 
         $('#room_id').append(ROOM_ID);
 
@@ -378,7 +378,7 @@
         });
 
         window.onbeforeunload = function () {
-            socket.emit('disconnect_event');
+            socket.emit('disconnect_event', ROOM_ID);
         }
     });
 

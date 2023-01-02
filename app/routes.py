@@ -4,7 +4,7 @@ from flask_login import current_user, login_user, logout_user
 from app.models import User, Room, TemporaryUser
 from app.forms import LoginForm, RegistrationForm, KeywordForm, CreateTableForm
 from werkzeug.urls import url_parse
-from flask_socketio import join_room
+from flask_socketio import join_room, emit
 import os
 
 
@@ -24,23 +24,9 @@ def dated_url_for(endpoint, **values):
 
 
 @app.route('/')
-@app.route('/index', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET'])
 def index():
-    form = CreateTableForm()
-    users = User.query.all()
-    for i in range(len(users)):
-        form.users_allowed.choices.append((str(i + 2), users[i].username))
-
-    if request.method == 'GET':
-        return render_template('index.html', rooms=Room.query.all(), form=form)
-    else:
-        if form.validate_on_submit():
-            room = Room(position='')
-            room.name = form.data['name']
-            db.session.add(room)
-            db.session.commit()
-        return redirect(url_for('index'))
-
+    return render_template('index.html', rooms=Room.query.all(), users=User.query.all())
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -75,19 +61,33 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
-@app.route('/room', methods=['GET', 'POST'])
+@app.route('/room', methods=['GET'])
 def room():
     if not current_user.is_authenticated:
         return redirect(url_for('login', next=request.full_path))
-    if request.method == 'GET':
-        room_id = request.args.get('id')
-        if TemporaryUser.query.filter_by(user_id=current_user.id, room_id=room_id).first() is None \
-            and room_id != None:
-            tu = TemporaryUser(room_id=room_id, user=current_user)
-            db.session.add(tu)
-            db.session.commit()
-        return render_template('room.html', title='Room {}'.format(room_id),
-                               temp_users=TemporaryUser.query.filter_by(room_id=room_id).all())
+
+    room_id = request.args.get('id')
+    data = Room.query.get(room_id).allowed_users
+
+    if len(data) == 0:
+        # no allowed ids
+        flash('You are not allowed in that room')
+        return redirect('index')
+
+
+    allowed_user_ids = list(map(int, data.split(';')))
+
+    if 0 not in allowed_user_ids and current_user.id not in allowed_user_ids:
+        flash('You are not allowed in that room')
+        return redirect('index')
+
+    if TemporaryUser.query.filter_by(user_id=current_user.id, room_id=room_id).first() is None \
+        and room_id != None:
+        tu = TemporaryUser(room_id=room_id, user=current_user)
+        db.session.add(tu)
+        db.session.commit()
+    return render_template('room.html', title='Room {}'.format(room_id),
+                           temp_users=TemporaryUser.query.filter_by(room_id=room_id).all())
 
 
 @app.route('/logout')
@@ -95,16 +95,6 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-
-
-@app.route('/create_room', methods=['POST'])
-def create_room():
-    if current_user.is_authenticated:
-        room = Room(position='')
-        db.session.add(room)
-        db.session.commit()
-        return str(room.id)
-    return 'ti cho tipa hitry ochen?'
 
 
 @app.route('/become_admin', methods=['GET', 'POST'])
@@ -129,13 +119,3 @@ def become_admin():
                     return 'FAILED. WRONG KEY.'
     else:
         return redirect(url_for('register'))
-
-
-@app.route('/delete_room', methods=['GET'])
-def delete_room():
-    room_id = request.args.get('id')
-    Room.query.filter_by(id=room_id).delete()
-    db.session.commit()
-    return 'OK'
-
-

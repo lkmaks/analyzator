@@ -5,8 +5,6 @@ from flask_login import current_user
 from app.models import Room
 from app import db
 import html
-from sqlalchemy.orm.session import Session
-from sqlalchemy import select
 
 
 @socketio.on('board_event')
@@ -21,6 +19,13 @@ def board_event(data):
     emit('lobby/board_event', room + ';' + mes, room='lobby')
 
     pos = Room.query.get(room).position
+
+    pos_arr = list(map(int, pos.split(';')[:-1]))
+
+    moves_present = set()
+    for i in range(0, len(pos_arr), 2):
+        moves_present.add((pos_arr[i], pos_arr[i + 1]))
+
     arr = mes.split(';')
     if arr[0] == 'undo' and pos != '':
         i = len(pos) - 1
@@ -33,7 +38,8 @@ def board_event(data):
     elif arr[0] == 'add_stone':
         i = arr[1]
         j = arr[2]
-        pos += '{};{};'.format(i, j)
+        if (int(i), int(j)) not in moves_present:
+            pos += '{};{};'.format(i, j)
     elif arr[0] == 'undo_until':
         i = arr[1]
         j = arr[2]
@@ -64,14 +70,11 @@ def chat_event(mes):
 
 
 @socketio.on('disconnect_event')
-def disconnect():
-    # emit('room_event', data['room'] + 'leave:' + current_user.username, room=str(current_user.temp.first().room_id))
-    # emit('lobby/room_event', data['room'] + 'leave:' + current_user.username, room='lobby')
+def disconnect(room_id):
+    emit('lobby/user_left', room_id + ':' + current_user.username, room='lobby')
     db.session.delete(current_user.temp.first())
     db.session.commit()
 
-
-import flask
 
 @socketio.on('lobby/watching_lobby')
 def watching_lobby(mes):
@@ -90,4 +93,24 @@ def watching_lobby(mes):
         emit('lobby/pos_data', str(r.id) + ';' + pos)
     join_room('lobby')
 
+
+
+@socketio.on('lobby/delete_room')
+def delete_room(room_id):
+    Room.query.filter_by(id=room_id).delete()
+    db.session.commit()
+    emit('lobby/room_deleted', str(room_id), room=str(room_id))
+    emit('lobby/room_deleted', str(room_id), room='lobby')
+
+
+@socketio.on('lobby/create_room')
+def create_table(mes):
+    name, user_ids = mes
+    room = Room(position='')
+    room.name = name
+    room.allowed_users = ';'.join(user_ids)
+
+    db.session.add(room)
+    db.session.commit()
+    emit('lobby/rooms_added', str(room.id) + ';' + room.name, room='lobby')
 
