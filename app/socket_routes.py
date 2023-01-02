@@ -74,8 +74,6 @@ def disconnect(room_id):
     db.session.commit()
 
 
-import flask
-
 @socketio.on('lobby/watching_lobby')
 def watching_lobby(mes):
     rooms = Room.query.all()
@@ -93,4 +91,23 @@ def watching_lobby(mes):
         emit('lobby/pos_data', str(r.id) + ';' + pos)
     join_room('lobby')
 
+
+
+@socketio.on('lobby/delete_room')
+def delete_room(room_id):
+    Room.query.filter_by(id=room_id).delete()
+    db.session.commit()
+    emit('lobby/room_deleted', str(room_id), room=str(room_id))
+    emit('lobby/room_deleted', str(room_id), room='lobby')
+
+
+@socketio.on('lobby/create_room')
+def create_table(mes):
+    name, user_ids = mes
+    room = Room(position='')
+    room.name = name
+    room.allowed_users = ';'.join(user_ids)
+    db.session.add(room)
+    db.session.commit()
+    emit('lobby/rooms_added', str(room.id) + ';' + room.name)
 

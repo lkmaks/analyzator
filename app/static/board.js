@@ -80,12 +80,8 @@ class Board {
         var cte = this.containing_element;
 
         $('#delete_room_' + room_id).on("click", function(event) {
-            $.ajax({
-                url: "/delete_room?id=" + room_id,
-                success: function(result) {
-                    cte.remove();
-                }
-            })
+            console.log('123');
+            socket.emit('lobby/delete_room', room_id);
         });
 
         this.can = document.createElement('canvas');

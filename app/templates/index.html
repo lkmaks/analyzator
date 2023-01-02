@@ -94,8 +94,28 @@
                 }
             });
 
-            socket.emit('lobby/watching_lobby', create_mes('join'));
+            socket.on('lobby/room_deleted', function(mes) {
+                var room_id = parseInt(mes);
+                $('#room_box_' + room_id).remove();
+            });
 
+            $(document).ready(function() {
+                $('#create_room_btn').click(function () {
+                    console.log('CREATING');
+                    var room_name = $('#room_name_field').text();
+                    var users_list = [];
+                    var radios = $(':radio');
+                    for (var i = 0; i < radios.length; i++) {
+                        if (radios[i].checked) {
+                            users_list.push(radios[i].id.slice('choose_user_'.length))
+                        }
+                    }
+                    socket.emit('lobby/create_room', [room_name, users_list]);
+                });
+            });
+
+
+            socket.emit('lobby/watching_lobby', create_mes('join'));
         </script>
     {% endif %}
 
@@ -105,8 +125,14 @@
                 <div class="add_table_form">
                 <h1 style="font-size: 20px; text-align: center">Add table</h1>
                 <br>
-                {{ wtf.quick_form(form) }}
-            </div>
+                <input type="text" class="form-control" id="room_name_field">
+                    <div id="users_choce">
+                        {% for user in users %}
+                            <p>{{ user.username }}</p><input type="radio" id="choose_user_{{ user.id }}">
+                        {% endfor %}
+                    </div>
+                <button id="create_room_btn" style="width: 100px; height: 50px">Create room</button>
+                </div>
             </div>
         {% endif %}
 
@@ -127,6 +153,7 @@
     </div>
 
 {% endif %}
+
 
 <div style="display:none;">
     <img id="white_stone" src="{{ url_for('static', filename = 'w_succ.png') }}" width="500" height="500" />
