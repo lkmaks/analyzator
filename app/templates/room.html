@@ -57,6 +57,8 @@
 
     var STONE_RADIUS = div(STEP, 2) - 1;
 
+    var linepos1 = -1, linepos2 = -1;
+
     function min (a, b) {
         if (a < b) {
             return a;
@@ -96,6 +98,29 @@
         return `<b>${s}</b>`;
     }
 
+    function pos2coords(x, y) {
+        nx = (x + 1) * STEP + LEFT_X;
+        ny = (y + 1) * STEP + TOP_Y;
+        return [nx, ny];
+    }
+
+    function drawline(a, b) {
+        console.log(a, b);
+        ac = pos2coords(a[0], a[1]);
+        bc = pos2coords(b[0], b[1]);
+        console.log(ac, bc);
+
+        ctx = board_context();
+        ctx.save();
+        ctx.strokeStyle = "rgba(200, 0, 0, 0.5)";
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(ac[0], ac[1]);
+        ctx.lineTo(bc[0], bc[1]);
+        ctx.stroke();
+        ctx.restore();
+    }
+
     function init_sockets() {
         var arr = window.location.href.split('=');
         ROOM_ID = arr[arr.length - 1];
@@ -117,6 +142,7 @@
             for (var i = 0; i < mes.length - 1; i += 2) {
                 add_stone(parseInt(mes[i]), parseInt(mes[i + 1]));
             }
+
         });
 
         socket.on('board_event', function (mes) {
@@ -153,6 +179,11 @@
         });
 
         socket.emit('room_event', create_mes('join'));
+
+        socket.on('room/drawline', function (mes) {
+            console.log(mes);
+            drawline([mes[0][1], mes[0][0]], [mes[1][1], mes[1][0]]);
+        })
     }
 
     function board_context() {
@@ -382,8 +413,25 @@
                 y = div(y, STEP);
                 --y;
 
-                user_click_event(y, x, e.button);
+                console.log(e.shiftKey);
+
+                if (e.shiftKey) {
+                    if (linepos1 === -1) {
+                        linepos1 = [y, x];
+                        console.log(linepos1, linepos2);
+                    }
+                    else if (linepos2 === -1) {
+                        linepos2 = [y, x];
+                        console.log(linepos1, linepos2);
+                        socket.emit('room/drawline', [ROOM_ID, linepos1, linepos2]);
+                        linepos1 = linepos2 = -1;
+                    }
+                }
+                else {
+                    user_click_event(y, x, e.button);
+                }
             }
+
         });
 
         $('#board').get(0).addEventListener('contextmenu', function(e) {
@@ -408,6 +456,7 @@
                 var moves = pos2moves(txt.slice(i));
                 console.log(moves);
                 socket.emit('board_putpos', [ROOM_ID, moves]);
+                $('#chat_text_field').val('');
             }
             else {
                 socket.emit('chat_event', $('#chat_text_field').val());
@@ -423,7 +472,9 @@
 
         window.onbeforeunload = function () {
             socket.emit('disconnect_event', ROOM_ID);
-        }
+        };
+
+        post_chat_message('COMMANDS: <br> putpos [position];<br>  shift+click two times -- line between points');
     });
 
 </script>

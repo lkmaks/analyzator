@@ -84,7 +84,7 @@
             $('#create_room_btn').click(function () {
                 var room_name = $('#room_name_field')[0].value;
                 var users_list = [];
-                var radios = $(':radio');
+                var radios = $(':checkbox');
                 for (var i = 0; i < radios.length; i++) {
                     if (radios[i].checked) {
                         users_list.push(radios[i].id.slice('choose_user_'.length))
@@ -106,12 +106,12 @@
                 <div class="panel panel-default">
                     <input type="text" class="form-control" id="room_name_field">
                         <div id="users_choce">
-                            <input style="display: inline-block "type="radio" id="choose_user_0">
-                            <p style="display: inline-block;">All</p>
+                            <input style="display: inline-block "type="checkbox" id="choose_user_0" >
+                            <p style="display: inline-block;" class="username_choce">All</p>
                             <br>
                             {% for user in users %}
-                                <input style="display: inline-block "type="radio" id="choose_user_{{ user.id }}">
-                                <p style="display: inline-block;">{{ user.username }}</p>
+                                <input style="display: inline-block "type="checkbox" id="choose_user_{{ user.id }}">
+                                <p class="username_choce" style="display: inline-block;">{{ user.username }}</p>
                                 <br>
                             {% endfor %}
                         </div>
