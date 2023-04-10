@@ -8,6 +8,37 @@
         return Math.floor(a / b);
     }
 
+    function pos2moves(s) {
+        t = 'abcdefghijklmno';
+        letters = [];
+        for (var i = 0; i < t.length; i++) {
+            letters.push(t[i]);
+        }
+        console.log(letters);
+        numbers = [];
+
+        i = 0;
+        while (i < s.length) {
+            console.log(i);
+            x = s.charCodeAt(i) - 'a'.charCodeAt(0);
+            y = -1;
+            if (i === s.length - 1 || letters.includes(s[i + 2])) {
+                y = parseInt(s[i + 1]);
+                y = 15 - y;
+                i += 2;
+            }
+            else {
+                y = parseInt(s.slice(i + 1, i + 3));
+                y = 15 - y;
+                i += 3;
+            }
+            console.log(x, y);
+            numbers.push(y);
+            numbers.push(x);
+        }
+        return numbers;
+    }
+
     var CNT = 0;
     var STACK_POS;
     var ARR_POS; //  0: empty, 1: black; 2: white
@@ -25,6 +56,8 @@
     var BLACK_STONE_COLOR = '#2e2e2e';
 
     var STONE_RADIUS = div(STEP, 2) - 1;
+
+    var linepos1 = -1, linepos2 = -1;
 
     function min (a, b) {
         if (a < b) {
@@ -65,6 +98,29 @@
         return `<b>${s}</b>`;
     }
 
+    function pos2coords(x, y) {
+        nx = (x + 1) * STEP + LEFT_X;
+        ny = (y + 1) * STEP + TOP_Y;
+        return [nx, ny];
+    }
+
+    function drawline(a, b) {
+        console.log(a, b);
+        ac = pos2coords(a[0], a[1]);
+        bc = pos2coords(b[0], b[1]);
+        console.log(ac, bc);
+
+        ctx = board_context();
+        ctx.save();
+        ctx.strokeStyle = "rgba(200, 0, 0, 0.5)";
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(ac[0], ac[1]);
+        ctx.lineTo(bc[0], bc[1]);
+        ctx.stroke();
+        ctx.restore();
+    }
+
     function init_sockets() {
         var arr = window.location.href.split('=');
         ROOM_ID = arr[arr.length - 1];
@@ -77,6 +133,16 @@
             for (var i = 0; i < arr.length - 1; i += 2) {
                 add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
             }
+        });
+
+        socket.on('board_putpos', function (mes) {
+            while (CNT > 0) {
+                undo();
+            }
+            for (var i = 0; i < mes.length - 1; i += 2) {
+                add_stone(parseInt(mes[i]), parseInt(mes[i + 1]));
+            }
+
         });
 
         socket.on('board_event', function (mes) {
@@ -113,6 +179,11 @@
         });
 
         socket.emit('room_event', create_mes('join'));
+
+        socket.on('room/drawline', function (mes) {
+            console.log(mes);
+            drawline([mes[0][1], mes[0][0]], [mes[1][1], mes[1][0]]);
+        })
     }
 
     function board_context() {
@@ -169,8 +240,6 @@
 
 
     function place_stone(i, j, color, text, text_color) {
-        console.log('Stone color: ' + color);
-        console.log('Text color: ' + text_color);
         const white_stone = document.getElementById("white_stone");
         const black_stone = document.getElementById("black_stone");
         var x = (j + 1) * STEP - STEP / 2 + STEP / 20, y = (i + 1) * STEP - STEP / 2 + STEP / 20;
@@ -250,20 +319,14 @@
 
 
     function render_board() {
-        console.log('Call render_boar');
         draw_empty_board();
         var stone_color = BLACK_STONE_COLOR;
         var opp_color = WHITE_STONE_COLOR;
         for (var i = 0; i < CNT; ++i) {
             var x = STACK_POS[i][0];
             var y = STACK_POS[i][1];
-            console.log(stone_color);
-            console.log(opp_color);
             place_stone(x, y, stone_color, i + 1, opp_color);
             [stone_color, opp_color] = [opp_color, stone_color];
-            console.log(stone_color);
-            console.log(opp_color);
-            console.log('!!!');
         }
     }
 
@@ -318,7 +381,7 @@
             socket.emit('board_event', create_mes('undo'));
         }
         else if (button === 0) {
-            if (ARR_POS[i][j] == 0) {
+            if (ARR_POS[i][j] === 0) {
                 socket.emit('board_event', create_mes(`add_stone;${i};${j}`));
             }
             else {
@@ -350,8 +413,25 @@
                 y = div(y, STEP);
                 --y;
 
-                user_click_event(y, x, e.button);
+                console.log(e.shiftKey);
+
+                if (e.shiftKey) {
+                    if (linepos1 === -1) {
+                        linepos1 = [y, x];
+                        console.log(linepos1, linepos2);
+                    }
+                    else if (linepos2 === -1) {
+                        linepos2 = [y, x];
+                        console.log(linepos1, linepos2);
+                        socket.emit('room/drawline', [ROOM_ID, linepos1, linepos2]);
+                        linepos1 = linepos2 = -1;
+                    }
+                }
+                else {
+                    user_click_event(y, x, e.button);
+                }
             }
+
         });
 
         $('#board').get(0).addEventListener('contextmenu', function(e) {
@@ -367,8 +447,21 @@
         $('#room_id').append(ROOM_ID);
 
         $('#chat_text_field').on('enterKey', function (e) {
-            socket.emit('chat_event', $('#chat_text_field').val());
-            $('#chat_text_field').val('');
+            txt = $('#chat_text_field').val();
+            if (txt.slice(0, 6) === 'putpos') {
+                var i = 6;
+                while (txt[i] === ' ') {
+                    i += 1;
+                }
+                var moves = pos2moves(txt.slice(i));
+                console.log(moves);
+                socket.emit('board_putpos', [ROOM_ID, moves]);
+                $('#chat_text_field').val('');
+            }
+            else {
+                socket.emit('chat_event', $('#chat_text_field').val());
+                $('#chat_text_field').val('');
+            }
         });
 
         $('#chat_text_field').keypress(function (e) {
@@ -379,7 +472,9 @@
 
         window.onbeforeunload = function () {
             socket.emit('disconnect_event', ROOM_ID);
-        }
+        };
+
+        post_chat_message('COMMANDS: <br> putpos [position];<br>  shift+click two times -- line between points');
     });
 
 </script>

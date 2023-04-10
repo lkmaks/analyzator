@@ -53,6 +53,28 @@ def board_event(data):
     db.session.commit()
 
 
+@socketio.on('board_putpos')
+def putpos(data):
+    room_id, moves = data
+    str_moves = ';'.join(str(m) for m in moves) + ';'
+
+    paired = []
+    for i in range(0, len(moves), 2):
+        paired.append((moves[i], moves[i + 1]))
+
+    if len(paired) != len(set(paired)):
+        return
+
+    for move in paired:
+        if move[0] not in range(15) or move[1] not in range(15):
+            return
+
+    Room.query.get(room_id).position = str_moves
+    emit('board_putpos', moves, room=room_id)
+    emit('chat_event', 'Position set', room=room_id);
+    db.session.commit()
+
+
 @socketio.on('room_event')
 def room_entry(data):
     if data['mes'] == 'join':
@@ -114,3 +136,9 @@ def create_table(mes):
     db.session.commit()
     emit('lobby/rooms_added', str(room.id) + ';' + room.name, room='lobby')
 
+@socketio.on('room/drawline')
+def drawline(mes):
+    room_id, pos1, pos2 = mes
+    if pos1[0] in range(15) and pos1[1] in range(15) \
+        and pos2[0] in range(15) and pos2[1] in range(15):
+        emit('room/drawline', [pos1, pos2], room=room_id)
