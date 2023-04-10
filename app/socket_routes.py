@@ -142,3 +142,11 @@ def drawline(mes):
     if pos1[0] in range(15) and pos1[1] in range(15) \
         and pos2[0] in range(15) and pos2[1] in range(15):
         emit('room/drawline', [pos1, pos2], room=room_id)
+
+#
+# @socketio.on('room/setpos')
+# def setinit(mes):
+#     room_id, pos = mes
+#     Room.query.get(room_id).position = pos
+#     emit('lobby/room_setpos', pos, room=str(room_id))
+#     emit('lobby/room_setpos', pos, room='lobby')
