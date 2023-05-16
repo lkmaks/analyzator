@@ -97,6 +97,15 @@ body {
     border: 4px black double;
 }
 
+#left_panel_room {
+    position: absolute;
+    width: 10%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+    border: 4px black double;
+}
+
 #right_panel_bottom {
     position: absolute;
     width: 100%;
@@ -189,4 +198,8 @@ html, body {
 
 .username_choce {
 
+}
+
+#button_back {
+    width: 100%;
 }

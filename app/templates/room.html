@@ -293,6 +293,17 @@
             ctx.lineTo(LEFT_X + (i + 1) * STEP, TOP_Y + STEP * SIZE);
             ctx.stroke();
         }
+
+        ctx.font = (Math.ceil(STEP / 2.5)).toString() + "px sans-serif";
+        console.log(ctx.font);
+        for (var i = 0; i < SIZE; ++i) {
+            ctx.fillText(String.fromCharCode(65 + i), LEFT_X + (i + 1) * STEP - STEP / 5.8, TOP_Y + STEP * SIZE + STEP / 2);
+            var toadd = 0;
+            if (i < 6) {
+                toadd = STEP / 6;
+            }
+            ctx.fillText((SIZE - i).toString(), LEFT_X + STEP - STEP / 2 - toadd, TOP_Y + (i + 1) * STEP + STEP / 5.8);
+        }
     }
 
     function create_board () {
@@ -474,12 +485,20 @@
             socket.emit('disconnect_event', ROOM_ID);
         };
 
+        $("#button_back").click(function(e) {
+            // as if you clicked with right button
+            user_click_event(0, 0, 2);
+        });
+
         post_chat_message('COMMANDS: <br> putpos [position];<br>  shift+click two times -- line between points');
     });
 
 </script>
 
 <div id="gamecontent">
+    <div id="left_panel_room">
+        <div id="button_back"><img src="{{ url_for('static', filename = 'button_back.png') }}" width = "100" height="100"></div>
+    </div>
     <div id="board_container"></div>
     <div id="right_panel_room">
         <div id="right_panel_top">
