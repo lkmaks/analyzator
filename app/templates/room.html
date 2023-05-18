@@ -390,7 +390,7 @@
     }
 
 
-    function user_click_event(i, j, button) {
+    function user_click_event(i, j, button, ctrl_key) {
         if (button === 2) {
             socket.emit('board_event', create_mes('undo'));
         }
@@ -399,7 +399,9 @@
                 socket.emit('board_event', create_mes(`add_stone;${i};${j}`));
             }
             else {
-                socket.emit('board_event', create_mes(`undo_until;${i};${j}`));
+                if (ctrl_key) {
+                    socket.emit('board_event', create_mes(`undo_until;${i};${j}`));
+                }
             }
         }
     }
@@ -442,7 +444,7 @@
                     }
                 }
                 else {
-                    user_click_event(y, x, e.button);
+                    user_click_event(y, x, e.button, e.ctrlKey);
                 }
             }
 
