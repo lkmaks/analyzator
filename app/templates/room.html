@@ -294,15 +294,18 @@
             ctx.stroke();
         }
 
-        ctx.font = (Math.ceil(STEP / 2.5)).toString() + "px sans-serif";
+        ctx.font = "20px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
         console.log(ctx.font);
         for (var i = 0; i < SIZE; ++i) {
-            ctx.fillText(String.fromCharCode(65 + i), LEFT_X + (i + 1) * STEP - STEP / 5.8, TOP_Y + STEP * SIZE + STEP / 2);
+            ctx.fillText(String.fromCharCode(65 + i), LEFT_X + (i + 1) * STEP, TOP_Y + STEP * SIZE + STEP / 2);
             var toadd = 0;
             if (i < 6) {
                 toadd = STEP / 6;
             }
-            ctx.fillText((SIZE - i).toString(), LEFT_X + STEP - STEP / 2 - toadd, TOP_Y + (i + 1) * STEP + STEP / 5.8);
+            ctx.fillText((SIZE - i).toString(), LEFT_X + STEP - STEP / 2, TOP_Y + (i + 1) * STEP);
         }
     }
 
