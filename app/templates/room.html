@@ -474,6 +474,16 @@
                 socket.emit('board_putpos', [ROOM_ID, moves]);
                 $('#chat_text_field').val('');
             }
+            else if (txt.slice(0, 9) === 'set start') {
+                var i = 9;
+                while (txt[i] === ' ') {
+                    i += 1;
+                }
+                var moves = pos2moves(txt.slice(i));
+                console.log(moves);
+                socket.emit('set_start_pos', [ROOM_ID, moves]);
+                $('#chat_text_field').val('');
+            }
             else {
                 socket.emit('chat_event', $('#chat_text_field').val());
                 $('#chat_text_field').val('');
@@ -495,6 +505,11 @@
             user_click_event(0, 0, 2);
         });
 
+        $("#button_start").click(function(e) {
+            // as if you clicked with right button
+            socket.emit('make_start_pos', ROOM_ID);
+        });
+
         post_chat_message('COMMANDS: <br> putpos [position];<br>  shift+click two times -- line between points');
     });
 
@@ -506,6 +521,9 @@
         <div id="right_panel_top">
             <div id="chat_header">
                 <div style="display: inline-block; position: absolute; left: 0%" id="button_back"><img src="{{ url_for('static', filename = 'button_back.png') }}" width = "30" height="30"></div>
+                <div id="button_start" style="display: inline-block; position: absolute; color: green; position: absolute; left: 30px">
+                    <img src="{{ url_for('static', filename = 'start.jpg') }}" width = "30" height="30">
+                </div>
                 <div style="display: inline-block"><h2>Room #<span id="room_id"></span></h2></div>
             </div>
             <div id="chat_area">

@@ -15,6 +15,7 @@ class Room(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(500))
     position = db.Column(db.String(500))
+    start_position = db.Column(db.String(500))
     users = db.relationship('TemporaryUser', backref='room', lazy='dynamic')
     allowed_users = db.Column(db.String(500))
 
