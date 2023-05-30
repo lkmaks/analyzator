@@ -44,11 +44,17 @@ def board_event(data):
         i = arr[1]
         j = arr[2]
         arr_pos = pos.split(';')
-        arr_pos.pop()
-        while len(arr_pos) > 0 and (arr_pos[-2], arr_pos[-1]) != (i, j):
+        if len(arr_pos) > 0:
             arr_pos.pop()
-            arr_pos.pop()
-        pos = ';'.join(arr_pos) + ';'
+            while len(arr_pos) > 0 and (arr_pos[-2], arr_pos[-1]) != (i, j):
+                arr_pos.pop()
+                arr_pos.pop()
+
+            if len(arr_pos) > 0:
+                pos = ';'.join(arr_pos) + ';'
+            else:
+                pos = ''
+
     Room.query.get(room).position = pos
     db.session.commit()
 
@@ -72,7 +78,6 @@ def putpos(data):
     Room.query.get(room_id).position = str_moves
     emit('board_putpos', moves, room=room_id)
     emit('chat_event', 'Position set', room=room_id)
-    db.session.commit()
 
 
 @socketio.on('set_start_pos')
@@ -108,7 +113,6 @@ def make_start_pos(room_id):
     Room.query.get(room_id).position = str_moves
     emit('board_putpos', moves, room=room_id)
     emit('chat_event', 'Position set (from start position value)', room=room_id)
-    db.session.commit()
 
 
 @socketio.on('room_event')
