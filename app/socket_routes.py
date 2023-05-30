@@ -78,7 +78,41 @@ def putpos(data):
     Room.query.get(room_id).position = str_moves
     emit('board_putpos', moves, room=room_id)
     emit('chat_event', 'Position set', room=room_id)
+
+
+@socketio.on('set_start_pos')
+def set_start_pos(data):
+    room_id, moves = data
+    str_moves = ';'.join(str(m) for m in moves) + ';'
+
+    paired = []
+    for i in range(0, len(moves), 2):
+        paired.append((moves[i], moves[i + 1]))
+
+    if len(paired) != len(set(paired)):
+        return
+
+    for move in paired:
+        if move[0] not in range(15) or move[1] not in range(15):
+            return
+
+    Room.query.get(room_id).start_position = str_moves
+    emit('chat_event', 'Start position value set', room=room_id)
     db.session.commit()
+
+@socketio.on('make_start_pos')
+def make_start_pos(room_id):
+    str_moves = Room.query.get(room_id).start_position
+    print(str_moves)
+    moves = list(map(int, str_moves.replace(';', ' ').replace('(', ' ').replace(')', ' ').replace(',', ' ').split()))
+    print(moves)
+    # paired = []
+    # for i in range(0, len(moves), 2):
+    #     paired.append((moves[i], moves[i + 1]))
+
+    Room.query.get(room_id).position = str_moves
+    emit('board_putpos', moves, room=room_id)
+    emit('chat_event', 'Position set (from start position value)', room=room_id)
 
 
 @socketio.on('room_event')
@@ -134,7 +168,7 @@ def delete_room(room_id):
 @socketio.on('lobby/create_room')
 def create_table(mes):
     name, user_ids = mes
-    room = Room(position='')
+    room = Room(position='', start_position='')
     room.name = name
     room.allowed_users = ';'.join(user_ids)
 
@@ -148,3 +182,11 @@ def drawline(mes):
     if pos1[0] in range(15) and pos1[1] in range(15) \
         and pos2[0] in range(15) and pos2[1] in range(15):
         emit('room/drawline', [pos1, pos2], room=room_id)
+
+#
+# @socketio.on('room/setpos')
+# def setinit(mes):
+#     room_id, pos = mes
+#     Room.query.get(room_id).position = pos
+#     emit('lobby/room_setpos', pos, room=str(room_id))
+#     emit('lobby/room_setpos', pos, room='lobby')
