@@ -42,6 +42,22 @@
             }
         });
 
+        socket.on('lobby/board_putpos', function (mes) {
+            var arr = mes.split(';');
+            {#var board_id = parseInt(arr[0]);#}
+            {#arr = arr.slice(1, arr.length() - 1);#}
+            if (arr.length > 1) {
+                var room_id = parseInt(arr[0]);
+                n = boards[room_id].CNT;
+                for (i = 0; i < n; i++) {
+                    boards[room_id].undo();
+                }
+                for (i = 1; i < arr.length - 1; i += 2) {
+                    boards[room_id].add_stone(parseInt(arr[i]), parseInt(arr[i + 1]));
+                }
+            }
+        });
+
         socket.on('lobby/board_event', function (mes) {
             var arr = mes.split(';');
             var board_id = parseInt(arr[0]);

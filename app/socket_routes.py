@@ -77,6 +77,7 @@ def putpos(data):
 
     Room.query.get(room_id).position = str_moves
     emit('board_putpos', moves, room=room_id)
+    emit('lobby/board_putpos', room_id + ';' + str_moves, room='lobby')
     emit('chat_event', 'Position set', room=room_id)
 
 
@@ -111,7 +112,9 @@ def make_start_pos(room_id):
     #     paired.append((moves[i], moves[i + 1]))
 
     Room.query.get(room_id).position = str_moves
+    db.session.commit()
     emit('board_putpos', moves, room=room_id)
+    emit('lobby/board_putpos', room_id + ';' + str_moves, room='lobby')
     emit('chat_event', 'Position set (from start position value)', room=room_id)
 
 
