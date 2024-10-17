@@ -14,7 +14,7 @@
     <script type="text/javascript" src="{{ url_for('static', filename='board.js') }}"></script>
 
     <script>
-        var socket = io.connect();
+        var socket = io();
         var boards = {};
 
         socket.on('lobby/rooms_added', function(mes) {
