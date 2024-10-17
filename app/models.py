@@ -35,7 +35,7 @@ class TemporaryUser(db.Model):
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(256))
     temp = db.relationship('TemporaryUser', backref='user', lazy='dynamic')
     is_admin = db.Column(db.Integer)
 

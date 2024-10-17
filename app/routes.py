@@ -3,7 +3,7 @@ from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_user, logout_user
 from app.models import User, Room, TemporaryUser
 from app.forms import LoginForm, RegistrationForm, KeywordForm, CreateTableForm
-from werkzeug.urls import url_parse
+# from werkzeug.urls import url_parse
 from flask_socketio import join_room, emit
 import os
 
@@ -52,7 +52,7 @@ def register():
         return redirect(url_for('index'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, is_admin=False)
+        user = User(username=form.username.data, is_admin=0)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
