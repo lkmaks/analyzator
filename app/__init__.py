@@ -5,7 +5,9 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_socketio import SocketIO
 from flask_bootstrap import Bootstrap
+import os
 
+print(os.system('which python'))
 
 app = Flask(__name__)
 app.config.from_object(Config)
