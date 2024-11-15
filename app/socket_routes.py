@@ -186,14 +186,16 @@ def delete_room(room_id):
 
 @socketio.on('lobby/create_room')
 def create_table(mes):
-    (name, user_ids,
-     is_game_room,
-     time_1, time_2,
-     increment_1, increment_2) = mes
+    # (name, user_ids,
+    #  is_game_room,
+    #  time_1, time_2,
+    #  increment_1, increment_2) = mes
+
+    name, user_ids = mes
 
     room = Room(position='', start_position='')
     room.name = name
-    # room.allowed_users = ';'.join(user_ids)
+    room.allowed_users = ';'.join(user_ids)
     #
     # room.is_game_room = is_game_room
     # room.time_increment_1 = increment_1
