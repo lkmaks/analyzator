@@ -2,7 +2,7 @@ from app import socketio
 from flask_socketio import emit, send
 from flask_socketio import join_room
 from flask_login import current_user
-from app.models import Room
+from app.models import Room, TemporaryUser
 from app import db
 import html
 
@@ -126,7 +126,21 @@ def room_entry(data):
         emit('pos_data', pos)
         emit('room_event', data['room'] + ';' + 'new:' + current_user.username, room=data['room'])
         emit('lobby/room_event', data['room'] + 'new:' + current_user.username, room='lobby')
+    if data['mes'] == 'sit_1':
+        user_id = current_user.id
+        Room.query.get(data['room']).player_1 = user_id
+        db.session.commit()
+        emit('room_event', data['room'] + ';' + 'sit_1:' + current_user.username, room=data['room'])
+    if data['mes'] == 'sit_2':
+        user_id = current_user.id
+        Room.query.get(data['room']).player_2 = user_id
+        db.session.commit()
+        emit('room_event', data['room'] + ';' + 'sit_2:' + current_user.username, room=data['room'])
 
+#
+# @socketio.on('pause_game_event')
+# def room_entry(data):
+#
 
 @socketio.on('chat_event')
 def chat_event(mes):
@@ -162,6 +176,8 @@ def watching_lobby(mes):
 
 @socketio.on('lobby/delete_room')
 def delete_room(room_id):
+    TemporaryUser.query.filter_by(room_id=room_id).delete()
+    db.session.commit()
     Room.query.filter_by(id=room_id).delete()
     db.session.commit()
     emit('lobby/room_deleted', str(room_id), room=str(room_id))
@@ -170,10 +186,21 @@ def delete_room(room_id):
 
 @socketio.on('lobby/create_room')
 def create_table(mes):
-    name, user_ids = mes
+    (name, user_ids,
+     is_game_room,
+     time_1, time_2,
+     increment_1, increment_2) = mes
+
     room = Room(position='', start_position='')
     room.name = name
-    room.allowed_users = ';'.join(user_ids)
+    # room.allowed_users = ';'.join(user_ids)
+    #
+    # room.is_game_room = is_game_room
+    # room.time_increment_1 = increment_1
+    # room.time_increment_2 = increment_2
+    # room.player_1_time = time_1
+    # room.player_2_time = time_2
+    # room.time_active = 0
 
     db.session.add(room)
     db.session.commit()
