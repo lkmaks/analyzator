@@ -62,7 +62,7 @@ def board_event(data):
     emit('lobby/board_putpos', room + ';' + str_moves, room='lobby')
 
 
-def update_position(room_id, moves):
+def update_position(room_id, moves) -> str | None:
     str_moves = ';'.join(str(m) for m in moves) + ';'
 
     paired = []
@@ -84,6 +84,9 @@ def update_position(room_id, moves):
 def putpos(data):
     room_id, moves = data
     str_moves = update_position(room_id, moves)
+
+    if str_moves is None:
+        return
     
     emit('board_putpos', moves, room=room_id)
     emit('lobby/board_putpos', room_id + ';' + str_moves, room='lobby')

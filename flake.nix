@@ -18,6 +18,7 @@
         pname = "python dev environment";
         pkgs = nixpkgs.legacyPackages."${system}";
         venvDir = "venv";
+        dbPort = "5432";
       in {
           inherit pname;
 
@@ -33,8 +34,8 @@
             ];
 
             LOCAL = "yes";
-            DB_PORT= 5432;
-            DATABASE_URL = "postgresql://postgres@localhost:$DB_PORT/test";
+            DB_PORT = dbPort;
+            DATABASE_URL = "postgresql://postgres@localhost:${dbPort}/test";
 
             shellHook = ''
                 # create a virtualenv if there isn't one.
