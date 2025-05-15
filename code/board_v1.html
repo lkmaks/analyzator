@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<script>
+
+    function div(a, b) {
+        return Math.floor(a / b);
+    }
+
+
+
+    var LEFT_X = 0, TOP_Y = 0;
+    var STEP = 20;
+    var SIZE = 15;
+    var BOARD_COLOR = '#eaff82';
+    var LINE_COLOR = 'black';
+
+
+
+    var BASEPOS;
+    var ROOT;
+
+
+
+    function board_context() {
+        var can = document.getElementById('board');
+        var ctx = can.getContext("2d");
+        return ctx;
+    }
+
+
+    function clear_rect(i, j) {
+        var ctx = board_context();
+        ctx.fillStyle = BOARD_COLOR;
+        ctx.fillRect(STEP * j + div(STEP, 2), STEP * i + div(STEP, 2), STEP, STEP);
+
+        ctx.fillStyle = LINE_COLOR;
+        var x0 = STEP * j + STEP, y0 = STEP * i + STEP;
+        console.log(x0, y0);
+        if (i > 0) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0, y0 - STEP / 2);
+            ctx.stroke();
+        }
+        if (i < SIZE - 1) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0, y0 + STEP / 2);
+            ctx.stroke();
+        }
+        if (j > 0) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0 - STEP / 2, y0);
+            ctx.stroke();
+        }
+        if (j < SIZE - 1) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x0 + STEP / 2, y0);
+            ctx.stroke();
+        }
+    }
+
+
+    function user_click_event(i, j, button) {
+        if (button === 2) {
+            // rightclick
+
+        }
+    }
+
+    $(function() {
+        // init of board, attaching click event
+
+        var can = document.createElement('canvas');
+        can.id = 'board';
+        can.width = $(document).width();
+        can.height = $(document).height();
+        var body = $('body').get(0);
+        body.appendChild(can);
+
+        var ctx = can.getContext("2d");
+        ctx.translate(0.5, 0.5);
+
+        ctx.fillStyle = BOARD_COLOR;
+        ctx.fillRect(LEFT_X, TOP_Y, STEP * (SIZE + 1), STEP * (SIZE + 1));
+
+        ctx.fillStyle = LINE_COLOR;
+        for (var i = 0; i < SIZE; ++i) {
+            ctx.beginPath();
+            ctx.moveTo(LEFT_X + STEP, TOP_Y + (i + 1) * STEP);
+            console.log("?", LEFT_X + STEP, TOP_Y + (i + 1) * STEP);
+            ctx.lineTo(LEFT_X + STEP * SIZE, TOP_Y + (i + 1) * STEP);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(LEFT_X + (i + 1) * STEP, TOP_Y + STEP);
+            ctx.lineTo(LEFT_X + (i + 1) * STEP, TOP_Y + STEP * SIZE);
+            ctx.stroke();
+        }
+
+        $('#board').click(function(e) {
+            var x = e.pageX - this.offsetLeft,
+                y = e.pageY - this.offsetTop;
+            if (x >= div(STEP, 2) && x < LEFT_X + STEP * SIZE + div(STEP, 2)
+                && y >= div(STEP, 2) && y < TOP_Y + STEP * SIZE + div(STEP, 2)) {
+                x -= LEFT_X;
+                x += div(STEP, 2);
+                x = div(x, STEP);
+                --x;
+                y -= TOP_Y;
+                y += div(STEP, 2);
+                y = div(y, STEP);
+                --y;
+                user_click_event(y, x, e.button);
+            }
+        });
+    });
+
+</script>
+
+
+{% endblock %}
