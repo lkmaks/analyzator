@@ -137,4 +137,5 @@ dmypy.json
 
 
 migrations/*
+.pg/*
 

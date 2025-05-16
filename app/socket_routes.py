@@ -6,6 +6,12 @@ from app.models import Room
 from app import db
 import html
 
+def moves_from_string(pos: str) -> list[int]:
+    coord_strs = pos.split(';')[:-1]
+    if len(coord_strs) < 2:
+        return []
+    return list(map(int, coord_strs))
+    
 
 @socketio.on('board_event')
 def board_event(data):
@@ -15,31 +21,27 @@ def board_event(data):
     if Room.query.get(room) is None:
         return
 
-    emit('board_event', mes, room=room)
-    emit('lobby/board_event', room + ';' + mes, room='lobby')
-
     pos = Room.query.get(room).position
 
-    pos_arr = list(map(int, pos.split(';')[:-1]))
+    pos_arr = moves_from_string(pos)
 
     moves_present = set()
     for i in range(0, len(pos_arr), 2):
         moves_present.add((pos_arr[i], pos_arr[i + 1]))
 
     arr = mes.split(';')
-    if arr[0] == 'undo' and pos != '':
-        i = len(pos) - 1
-        cnt = 0
-        while cnt < 2 or pos[i] != ';':
-            if pos[i] == ';':
-                cnt += 1
-            i -= 1
-        pos = pos[:i + 1]
+    if arr[0] == 'undo' and len(pos_arr) < 2:
+        return
+    
+    if arr[0] == 'undo':
+        pos_arr.pop()
+        pos_arr.pop()
     elif arr[0] == 'add_stone':
-        i = arr[1]
-        j = arr[2]
-        if (int(i), int(j)) not in moves_present:
-            pos += '{};{};'.format(i, j)
+        i = int(arr[1])
+        j = int(arr[2])
+        if (i, j) not in moves_present:
+            pos_arr.append(i);
+            pos_arr.append(j);
     elif arr[0] == 'undo_until':
         i = arr[1]
         j = arr[2]
@@ -54,14 +56,13 @@ def board_event(data):
                 pos = ';'.join(arr_pos) + ';'
             else:
                 pos = ''
+            pos_arr = moves_from_string(pos)
+    str_moves = update_position(room, pos_arr)
+    emit('board_putpos', pos_arr, room=room)
+    emit('lobby/board_putpos', room + ';' + str_moves, room='lobby')
 
-    Room.query.get(room).position = pos
-    db.session.commit()
 
-
-@socketio.on('board_putpos')
-def putpos(data):
-    room_id, moves = data
+def update_position(room_id, moves) -> str | None:
     str_moves = ';'.join(str(m) for m in moves) + ';'
 
     paired = []
@@ -76,6 +77,17 @@ def putpos(data):
             return
 
     Room.query.get(room_id).position = str_moves
+    db.session.commit()
+    return str_moves
+
+@socketio.on('board_putpos')
+def putpos(data):
+    room_id, moves = data
+    str_moves = update_position(room_id, moves)
+
+    if str_moves is None:
+        return
+    
     emit('board_putpos', moves, room=room_id)
     emit('lobby/board_putpos', room_id + ';' + str_moves, room='lobby')
     emit('chat_event', 'Position set', room=room_id)
@@ -104,9 +116,7 @@ def set_start_pos(data):
 @socketio.on('make_start_pos')
 def make_start_pos(room_id):
     str_moves = Room.query.get(room_id).start_position
-    print(str_moves)
     moves = list(map(int, str_moves.replace(';', ' ').replace('(', ' ').replace(')', ' ').replace(',', ' ').split()))
-    print(moves)
     # paired = []
     # for i in range(0, len(moves), 2):
     #     paired.append((moves[i], moves[i + 1]))
