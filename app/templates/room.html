@@ -359,11 +359,13 @@
         }
     }
 
-    function undo_until(i, j) {
+    function undo_until(i, j, render = true) {
         while (!(STACK_POS.at(-1).x == i && STACK_POS.at(-1).y == j)) {
             undo(false);
         }
-        render_board();
+        if (render) {
+            render_board();
+        }
     }
 
 
@@ -377,18 +379,18 @@
 
     function user_click_event(i, j, button, ctrl_key) {
         if (button === 2) {
-            undo();
+            undo(false);
             socket.emit('board_event', [ROOM_ID, serializePosition()]);
 
         }
         else if (button === 0) {
             if (ARR_POS[i][j] === 0) {
-                add_stone(i, j);
+                add_stone(i, j, false);
                 socket.emit('board_event', [ROOM_ID, serializePosition()]);
             }
             else {
                 if (ctrl_key) {
-                    undo_until(i, j);
+                    undo_until(i, j, false);
                     socket.emit('board_event', [ROOM_ID, serializePosition()]);
                 }
             }
