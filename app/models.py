@@ -16,8 +16,23 @@ class Room(db.Model):
     name = db.Column(db.String(500))
     position = db.Column(db.String(500))
     start_position = db.Column(db.String(500))
-    users = db.relationship('TemporaryUser', backref='room', lazy='dynamic')
+    users = db.relationship('TemporaryUser', backref='room', lazy='dynamic', cascade='all,delete')
     allowed_users = db.Column(db.String(500))
+
+    # is_game_room = db.Column(db.Integer)
+    # protocol = db.Column(db.String(500))
+    #
+    # player_1 = db.Column(db.Integer, db.ForeignKey('user.id'))
+    # player_2 = db.Column(db.Integer, db.ForeignKey('user.id'))
+    #
+    # player_1_time = db.Column(db.Integer)
+    # player_2_time = db.Column(db.Integer)
+    #
+    # last_start_time = db.Column(db.Integer)
+    # time_active = db.Column(db.Integer)
+    #
+    # time_increment_1 = db.Column(db.Integer)
+    # time_increment_2 = db.Column(db.Integer)
 
     def __repr__(self):
         return "Room {}, pos: {}".format(self.id, self.position)
@@ -36,7 +51,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     password_hash = db.Column(db.String(256))
-    temp = db.relationship('TemporaryUser', backref='user', lazy='dynamic')
+    temp = db.relationship('TemporaryUser', backref='user', lazy='dynamic', cascade='all,delete')
     is_admin = db.Column(db.Integer)
 
     def __repr__(self):
