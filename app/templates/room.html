@@ -378,6 +378,8 @@
 
 
     function user_click_event(i, j, button, ctrl_key) {
+        prevStack = structuredClone(STACK_POS);
+        prevGrid = structuredClone(ARR_POS);
         if (button === 2) {
             undo(false);
             socket.emit('board_event', [ROOM_ID, serializePosition()]);
@@ -395,7 +397,8 @@
                 }
             }
         }
-        // render_board();
+        STACK_POS = prevStack;
+        ARR_POS = prevGrid;
     }
 
 
