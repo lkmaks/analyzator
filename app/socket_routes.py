@@ -15,52 +15,15 @@ def moves_from_string(pos: str) -> list[int]:
 
 @socketio.on('board_event')
 def board_event(data):
-    mes = data['mes']
-    room = data['room']
+    room_id, moves = data
+    
+    str_moves = update_position(room_id, moves)
 
-    if Room.query.get(room) is None:
-        return
-
-    pos = Room.query.get(room).position
-
-    pos_arr = moves_from_string(pos)
-
-    moves_present = set()
-    for i in range(0, len(pos_arr), 2):
-        moves_present.add((pos_arr[i], pos_arr[i + 1]))
-
-    arr = mes.split(';')
-    if arr[0] == 'undo' and len(pos_arr) < 2:
+    if str_moves is None:
         return
     
-    if arr[0] == 'undo':
-        pos_arr.pop()
-        pos_arr.pop()
-    elif arr[0] == 'add_stone':
-        i = int(arr[1])
-        j = int(arr[2])
-        if (i, j) not in moves_present:
-            pos_arr.append(i);
-            pos_arr.append(j);
-    elif arr[0] == 'undo_until':
-        i = arr[1]
-        j = arr[2]
-        arr_pos = pos.split(';')
-        if len(arr_pos) > 0:
-            arr_pos.pop()
-            while len(arr_pos) > 0 and (arr_pos[-2], arr_pos[-1]) != (i, j):
-                arr_pos.pop()
-                arr_pos.pop()
-
-            if len(arr_pos) > 0:
-                pos = ';'.join(arr_pos) + ';'
-            else:
-                pos = ''
-            pos_arr = moves_from_string(pos)
-    str_moves = update_position(room, pos_arr)
-    emit('board_putpos', pos_arr, room=room)
-    emit('lobby/board_putpos', room + ';' + str_moves, room='lobby')
-
+    emit('board_putpos', moves, room=room_id)
+    emit('lobby/board_putpos', room_id + ';' + str_moves, room='lobby')
 
 def update_position(room_id, moves) -> str | None:
     str_moves = ';'.join(str(m) for m in moves) + ';'
